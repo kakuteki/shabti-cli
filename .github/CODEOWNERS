@@ -1,0 +1,13 @@
+# Default owner for all files
+*                       @kakuteki
+
+# CI/CD and project config
+.github/                @kakuteki
+package.json            @kakuteki
+eslint.config.js        @kakuteki
+
+# Source code
+src/                    @kakuteki
+
+# Tests
+tests/                  @kakuteki
