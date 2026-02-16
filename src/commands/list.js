@@ -3,16 +3,16 @@ import chalk from "chalk";
 import { heading } from "../utils/style.js";
 
 const SAMPLE_DATA = [
-  { id: 1, name: "Build CLI",    status: "done",        priority: "high" },
-  { id: 2, name: "Write tests",  status: "in-progress", priority: "mid" },
-  { id: 3, name: "Publish npm",  status: "pending",     priority: "high" },
-  { id: 4, name: "Add apt repo", status: "pending",     priority: "low" },
+  { id: 1, name: "Build CLI", status: "done", priority: "high" },
+  { id: 2, name: "Write tests", status: "in-progress", priority: "mid" },
+  { id: 3, name: "Publish npm", status: "pending", priority: "high" },
+  { id: 4, name: "Add apt repo", status: "pending", priority: "low" },
 ];
 
 const STATUS_COLOR = {
-  done:          chalk.green,
+  done: chalk.green,
   "in-progress": chalk.yellow,
-  pending:       chalk.gray,
+  pending: chalk.gray,
 };
 
 export function registerList(program) {
