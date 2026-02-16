@@ -1,0 +1,32 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@7
+
+jobs:
+  lint-and-test:
+    parameters:
+      node-version:
+        type: string
+    docker:
+      - image: cimg/node:<< parameters.node-version >>
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          name: Lint
+          command: npm run lint
+      - run:
+          name: Test
+          command: npm test
+
+workflows:
+  ci:
+    jobs:
+      - lint-and-test:
+          matrix:
+            parameters:
+              node-version:
+                - "20.19"
+                - "22.13"
