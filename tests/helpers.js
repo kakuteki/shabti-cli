@@ -11,15 +11,20 @@ const CLI = resolve(__dirname, "..", "src", "index.js");
  */
 export function run(args = []) {
   return new Promise((resolve) => {
-    execFile("node", [CLI, ...args], {
-      env: { ...process.env, FORCE_COLOR: "0" },
-      timeout: 10_000,
-    }, (err, stdout, stderr) => {
-      resolve({
-        stdout: stdout.toString(),
-        stderr: stderr.toString(),
-        code: err ? err.code ?? 1 : 0,
-      });
-    });
+    execFile(
+      "node",
+      [CLI, ...args],
+      {
+        env: { ...process.env, FORCE_COLOR: "0" },
+        timeout: 10_000,
+      },
+      (err, stdout, stderr) => {
+        resolve({
+          stdout: stdout.toString(),
+          stderr: stderr.toString(),
+          code: err ? (err.code ?? 1) : 0,
+        });
+      },
+    );
   });
 }
