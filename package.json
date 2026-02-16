@@ -4,7 +4,7 @@
   "description": "Demo CLI tool — showcasing npm-publishable CLI structure",
   "type": "module",
   "bin": {
-    "shabti": "./src/index.js"
+    "shabti": "src/index.js"
   },
   "files": [
     "src/"
@@ -24,7 +24,10 @@
     "demo",
     "tool"
   ],
-  "author": "",
+  "author": "Kaga Hinata",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
