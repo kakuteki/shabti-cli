@@ -2,6 +2,7 @@
 
 import chalk from "chalk";
 import { Command } from "commander";
+import { registerChat } from "./commands/chat.js";
 import { registerHello } from "./commands/hello.js";
 import { registerList } from "./commands/list.js";
 import { registerSpin } from "./commands/spin.js";
@@ -41,6 +42,7 @@ program
   .version("1.0.0");
 
 // Register commands
+registerChat(program);
 registerHello(program);
 registerList(program);
 registerSpin(program);
