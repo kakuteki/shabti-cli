@@ -25,13 +25,10 @@ describe("shabti chat", () => {
   });
 
   it("should error when OPENAI_API_KEY is missing", async () => {
-    try {
-      await run(CLI, [ENTRY, "chat"], {
-        env: { ...process.env, OPENAI_API_KEY: "your-api-key-here", FORCE_COLOR: "0" },
-        timeout: 3000,
-      });
-    } catch (err) {
-      expect(err.stderr + err.stdout).toContain("OPENAI_API_KEY is not set");
-    }
+    const err = await run(CLI, [ENTRY, "chat"], {
+      env: { ...process.env, OPENAI_API_KEY: "your-api-key-here", FORCE_COLOR: "0" },
+      timeout: 3000,
+    }).catch((e) => e);
+    expect(err.stderr + err.stdout).toContain("OPENAI_API_KEY is not set");
   });
 });

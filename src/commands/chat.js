@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { createInterface } from "readline";
 import OpenAI from "openai";
 import chalk from "chalk";
@@ -13,6 +12,7 @@ export function registerChat(program) {
     .option("-m, --model <model>", "OpenAI model to use", "gpt-4o-mini")
     .option("-s, --system <prompt>", "Custom system prompt", SYSTEM_PROMPT)
     .action(async (opts) => {
+      await import("dotenv/config");
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey || apiKey === "your-api-key-here") {
         error("OPENAI_API_KEY is not set. Add it to .env in the project root.");
