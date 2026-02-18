@@ -102,6 +102,7 @@ pub struct NapiStatus {
     pub tier: String,
     pub qdrant_url: String,
     pub data_dir: String,
+    pub model_id: String,
 }
 
 // ============================================================
@@ -333,6 +334,11 @@ impl ShabtiNapi {
     }
 
     #[napi]
+    pub fn model_id(&self) -> String {
+        self.engine.current_model_id().to_string()
+    }
+
+    #[napi]
     pub fn status(&self) -> NapiStatus {
         let count = self.engine.entry_count();
         let gate = self.engine.feature_gate();
@@ -342,6 +348,7 @@ impl ShabtiNapi {
             tier: format!("{:?}", gate.tier),
             qdrant_url: self.qdrant_url.clone(),
             data_dir: self.data_dir.to_string_lossy().to_string(),
+            model_id: self.engine.current_model_id().to_string(),
         }
     }
 

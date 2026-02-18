@@ -1,5 +1,5 @@
-import { createEngine } from "../core/engine.js";
-import { success, error, info } from "../utils/style.js";
+import { createEngine, loadConfig, saveConfig } from "../core/engine.js";
+import { success, error, info, warn } from "../utils/style.js";
 
 export function registerStore(program) {
   program
@@ -17,10 +17,25 @@ export function registerStore(program) {
         if (opts.session) options.sessionId = opts.session;
         if (opts.tags) options.tags = opts.tags.split(",").map((t) => t.trim());
 
+        // Model versioning check
+        const currentModelId = engine.modelId();
+        const config = loadConfig();
+        if (config.model_id && config.model_id !== currentModelId) {
+          const status = engine.status();
+          if (status.entryCount > 0) {
+            warn(`Embedding model changed: ${config.model_id} -> ${currentModelId}`);
+            warn("Existing entries use a different model. Search accuracy may be degraded.");
+          }
+        }
+
         const result = await engine.store(content, options);
 
         if (result.status === "stored") {
           success(`Stored: ${result.id}`);
+          // Record current model_id in config
+          if (config.model_id !== currentModelId) {
+            saveConfig({ ...config, model_id: currentModelId });
+          }
         } else {
           info(`Skipped (duplicate): existing ${result.existingId}`);
         }
