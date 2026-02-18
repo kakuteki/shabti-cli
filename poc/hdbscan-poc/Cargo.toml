@@ -1,0 +1,9 @@
+[package]
+name = "hdbscan-poc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hdbscan = "0.12"
+fastembed = "5"
+anyhow = "1"
