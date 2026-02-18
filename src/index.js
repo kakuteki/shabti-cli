@@ -30,24 +30,47 @@ ${chalk.cyan.bold(` |____/|_| |_|\\__,_|_.__/ \\__|_|`)}    ${chalk.yellow(`.%.*
   ${chalk.dim(`v${version}  —  "I shall do it. Here I am."`)}
 `;
 
-// Show banner when run without subcommand, or with --help
 const args = process.argv.slice(2);
-const isHelp = args.includes("--help") || args.includes("-h") || args.length === 0;
-if (isHelp) {
+const isNoArgs = args.length === 0;
+const isHelp = args.includes("--help") || args.includes("-h");
+
+// Show banner for help or no-args
+if (isHelp || isNoArgs) {
   console.log(BANNER);
 }
 
-const program = new Command();
+// Try launching REPL when no args and running in an interactive terminal
+if (isNoArgs && process.stdin.isTTY) {
+  const { launchRepl } = await import("./repl/index.js");
+  const result = await launchRepl();
+  if (result !== null) {
+    // REPL started successfully — nothing more to do
+    // (process.exit is handled inside ChatSession)
+  } else {
+    // API key not set — fall back to showing help below
+    showHelp();
+  }
+} else if (isNoArgs) {
+  // Non-TTY (piped / subprocess) — show help
+  showHelp();
+} else {
+  // Normal command parsing
+  buildProgram().parse();
+}
 
-program
-  .name("shabti")
-  .description("Demo CLI tool — showcasing npm-publishable CLI structure")
-  .version(version);
+function buildProgram() {
+  const program = new Command();
+  program
+    .name("shabti")
+    .description("Demo CLI tool — showcasing npm-publishable CLI structure")
+    .version(version);
+  registerChat(program);
+  registerHello(program);
+  registerList(program);
+  registerSpin(program);
+  return program;
+}
 
-// Register commands
-registerChat(program);
-registerHello(program);
-registerList(program);
-registerSpin(program);
-
-program.parse();
+function showHelp() {
+  buildProgram().outputHelp();
+}
