@@ -73,10 +73,7 @@ describe("computeSimilarity (async → Promise)", () => {
   });
 
   it("rejects on dimension mismatch", async () => {
-    await assert.rejects(
-      () => computeSimilarity([1, 2], [1, 2, 3]),
-      /dimension mismatch/
-    );
+    await assert.rejects(() => computeSimilarity([1, 2], [1, 2, 3]), /dimension mismatch/);
   });
 });
 
