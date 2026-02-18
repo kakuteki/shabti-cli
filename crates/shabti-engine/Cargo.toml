@@ -13,3 +13,6 @@ shabti-index = { path = "../shabti-index" }
 shabti-graph = { path = "../shabti-graph" }
 tokio = { workspace = true }
 uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

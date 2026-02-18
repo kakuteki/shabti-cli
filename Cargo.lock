@@ -2681,6 +2681,7 @@ dependencies = [
  "shabti-graph",
  "shabti-index",
  "shabti-storage",
+ "tempfile",
  "tokio",
  "uuid",
 ]
