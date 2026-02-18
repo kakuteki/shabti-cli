@@ -25,7 +25,7 @@ export async function launchRepl() {
   const session = new ChatSession({
     apiKey,
     model,
-    promptPrefix: "shabti> ",
+    promptPrefix: "you> ",
     onSlashCommand: handleSlashCommand,
     legacyExitWord: false,
   });
