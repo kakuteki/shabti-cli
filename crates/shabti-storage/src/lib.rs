@@ -1,2 +1,3 @@
-// shabti-storage: Append-Only Log
-// Full implementation in Phase 1 storage task
+mod append_log;
+
+pub use append_log::AppendLog;
