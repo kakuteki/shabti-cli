@@ -1,2 +1,3 @@
-// shabti-graph: petgraph wrapper
-// Skeleton only — full implementation in Phase 2
+mod memory_graph;
+
+pub use memory_graph::MemoryGraph;
