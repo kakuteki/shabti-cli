@@ -3,8 +3,8 @@ use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
-use shabti_core::error::{ShabtiError, ShabtiResult};
 use shabti_core::Event;
+use shabti_core::error::{ShabtiError, ShabtiResult};
 use uuid::Uuid;
 
 /// Stores events as JSON lines on disk with in-memory index.
@@ -26,18 +26,16 @@ impl EventStore {
             .read(true)
             .append(true)
             .open(path)
-            .map_err(|e| ShabtiError::Io(e))?;
+            .map_err(ShabtiError::Io)?;
 
         let mut events = Vec::new();
         let mut id_index = HashMap::new();
         let mut entry_index = HashMap::new();
 
         // Read existing events
-        let reader = BufReader::new(
-            File::open(path).map_err(|e| ShabtiError::Io(e))?,
-        );
+        let reader = BufReader::new(File::open(path).map_err(ShabtiError::Io)?);
         for line in reader.lines() {
-            let line = line.map_err(|e| ShabtiError::Io(e))?;
+            let line = line.map_err(ShabtiError::Io)?;
             if line.trim().is_empty() {
                 continue;
             }
@@ -70,12 +68,12 @@ impl EventStore {
             self.entry_index.insert(eid, idx);
         }
 
-        let mut line = serde_json::to_string(&event)
-            .map_err(|e| ShabtiError::Serialization(e.to_string()))?;
+        let mut line =
+            serde_json::to_string(&event).map_err(|e| ShabtiError::Serialization(e.to_string()))?;
         line.push('\n');
         self.file
             .write_all(line.as_bytes())
-            .map_err(|e| ShabtiError::Io(e))?;
+            .map_err(ShabtiError::Io)?;
 
         self.events.push(event);
         Ok(())

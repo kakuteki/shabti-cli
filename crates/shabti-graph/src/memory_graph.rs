@@ -156,7 +156,7 @@ impl MemoryGraph {
     /// Save graph to a file.
     pub fn save<P: AsRef<Path>>(&self, path: P) -> ShabtiResult<()> {
         let json = self.to_json()?;
-        std::fs::write(path, json).map_err(|e| ShabtiError::Io(e))
+        std::fs::write(path, json).map_err(ShabtiError::Io)
     }
 
     /// Load graph from a file. Returns empty graph if file doesn't exist.
@@ -165,7 +165,7 @@ impl MemoryGraph {
         if !path.exists() {
             return Ok(Self::new());
         }
-        let json = std::fs::read_to_string(path).map_err(|e| ShabtiError::Io(e))?;
+        let json = std::fs::read_to_string(path).map_err(ShabtiError::Io)?;
         Self::from_json(&json)
     }
 

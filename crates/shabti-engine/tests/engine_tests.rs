@@ -208,3 +208,237 @@ async fn entry_count_and_feature_gate() {
 
     engine.cleanup().await.unwrap();
 }
+
+// ============================================================
+// Phase 2: k-NN links, compound query, background indexer
+// ============================================================
+
+#[tokio::test]
+async fn generate_links_creates_edges_for_similar_content() {
+    let dir = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&dir)).await.unwrap();
+
+    engine
+        .store("cats are wonderful pets", &StoreOptions::default())
+        .await
+        .unwrap();
+    let r2 = engine
+        .store("kittens are adorable animals", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    let id2 = match r2 {
+        StoreResult::Stored(id) => id,
+        _ => panic!(),
+    };
+
+    engine.generate_links(id2).await.unwrap();
+
+    let graph = engine.graph();
+    assert!(graph.edge_count() > 0, "similar entries should be linked");
+
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn generate_links_excludes_self() {
+    let dir = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&dir)).await.unwrap();
+
+    let r1 = engine
+        .store(
+            "unique test content for self-link check",
+            &StoreOptions::default(),
+        )
+        .await
+        .unwrap();
+
+    let id1 = match r1 {
+        StoreResult::Stored(id) => id,
+        _ => panic!(),
+    };
+
+    engine.generate_links(id1).await.unwrap();
+
+    let graph = engine.graph();
+    let neighbors = graph.neighbors(id1, 1);
+    for (neighbor_id, _) in &neighbors {
+        assert_ne!(*neighbor_id, id1, "should not have self-link");
+    }
+
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn search_with_links_expands_via_graph() {
+    let dir = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&dir)).await.unwrap();
+
+    engine
+        .store("cats are wonderful pets", &StoreOptions::default())
+        .await
+        .unwrap();
+    let rb = engine
+        .store(
+            "dogs and pets are great companions",
+            &StoreOptions::default(),
+        )
+        .await
+        .unwrap();
+    let rc = engine
+        .store(
+            "veterinary care for domestic animals",
+            &StoreOptions::default(),
+        )
+        .await
+        .unwrap();
+
+    let id_b = match rb {
+        StoreResult::Stored(id) => id,
+        _ => panic!(),
+    };
+    let id_c = match rc {
+        StoreResult::Stored(id) => id,
+        _ => panic!(),
+    };
+
+    engine.generate_links(id_b).await.unwrap();
+    engine.generate_links(id_c).await.unwrap();
+
+    let results = engine
+        .search_with_links("I love kittens", 10, 2, None)
+        .await
+        .unwrap();
+
+    assert!(!results.is_empty());
+
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn search_with_links_score_sorted_descending() {
+    let dir = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&dir)).await.unwrap();
+
+    engine
+        .store("machine learning algorithms", &StoreOptions::default())
+        .await
+        .unwrap();
+    let rb = engine
+        .store(
+            "neural networks and deep learning",
+            &StoreOptions::default(),
+        )
+        .await
+        .unwrap();
+    let rc = engine
+        .store("artificial intelligence research", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    let id_b = match rb {
+        StoreResult::Stored(id) => id,
+        _ => panic!(),
+    };
+    let id_c = match rc {
+        StoreResult::Stored(id) => id,
+        _ => panic!(),
+    };
+
+    engine.generate_links(id_b).await.unwrap();
+    engine.generate_links(id_c).await.unwrap();
+
+    let results = engine
+        .search_with_links("deep learning", 10, 2, None)
+        .await
+        .unwrap();
+
+    for i in 1..results.len() {
+        assert!(
+            results[i - 1].score >= results[i].score,
+            "results should be sorted by score descending"
+        );
+    }
+
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn background_indexer_skips_links_in_minimal_tier() {
+    let dir = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&dir)).await.unwrap();
+
+    // With < 10 entries, FeatureGate disables knn_links (Minimal tier)
+    engine
+        .store("programming in Rust language", &StoreOptions::default())
+        .await
+        .unwrap();
+    engine
+        .store("Rust memory safety and ownership", &StoreOptions::default())
+        .await
+        .unwrap();
+    engine
+        .store("borrow checker in Rust compiler", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    engine.flush_background().await.unwrap();
+
+    // Minimal tier: knn_links disabled, no background link generation
+    let graph = engine.graph();
+    assert_eq!(
+        graph.node_count(),
+        0,
+        "Minimal tier should not generate links via background indexer"
+    );
+
+    // But explicit generate_links should still work
+    let results = engine.search_similar("Rust", 1, None).await.unwrap();
+    if let Some(r) = results.first() {
+        engine.generate_links(r.entry.id).await.unwrap();
+    }
+    let graph = engine.graph();
+    assert!(
+        graph.node_count() > 0,
+        "explicit generate_links should work regardless of tier"
+    );
+
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn background_indexer_shutdown() {
+    let dir = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&dir)).await.unwrap();
+
+    engine
+        .store("shutdown test content", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn list_events_accessible() {
+    let dir = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&dir)).await.unwrap();
+
+    let opts = StoreOptions {
+        session_id: Some("sess-1".to_string()),
+        ..Default::default()
+    };
+
+    engine.store("cats are amazing", &opts).await.unwrap();
+    engine.store("kittens are cute", &opts).await.unwrap();
+
+    engine.flush_background().await.unwrap();
+
+    let events = engine.list_events();
+    // Just verify it's accessible without panic
+    // Just verify it's accessible without panic
+    let _ = events.len();
+
+    engine.cleanup().await.unwrap();
+}

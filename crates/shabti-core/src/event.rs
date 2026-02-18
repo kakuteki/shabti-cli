@@ -85,10 +85,7 @@ pub fn detect_boundaries(distances: &[f32], threshold: f32) -> Vec<Boundary> {
 /// Detect boundaries using adaptive threshold (moving average + stddev).
 /// Falls back to a fixed threshold (median-based) when data is too small
 /// for meaningful statistics.
-pub fn detect_boundaries_adaptive(
-    distances: &[f32],
-    config: &AdaptiveThreshold,
-) -> Vec<Boundary> {
+pub fn detect_boundaries_adaptive(distances: &[f32], config: &AdaptiveThreshold) -> Vec<Boundary> {
     if distances.is_empty() {
         return Vec::new();
     }

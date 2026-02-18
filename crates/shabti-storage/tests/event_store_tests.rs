@@ -139,5 +139,8 @@ fn event_summary_embedding_optional() {
 
     let store = EventStore::open(&path).unwrap();
     let retrieved = store.get(id).unwrap();
-    assert_eq!(retrieved.summary_embedding.as_ref().unwrap(), &vec![0.1, 0.2, 0.3]);
+    assert_eq!(
+        retrieved.summary_embedding.as_ref().unwrap(),
+        &vec![0.1, 0.2, 0.3]
+    );
 }
