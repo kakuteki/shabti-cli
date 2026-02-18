@@ -6,9 +6,7 @@
 //!
 //! Run: cargo test -p shabti-engine --test f1_benchmark -- --nocapture
 
-use shabti_core::event::{
-    AdaptiveThreshold, consecutive_distances, detect_boundaries_adaptive,
-};
+use shabti_core::event::{AdaptiveThreshold, consecutive_distances, detect_boundaries_adaptive};
 use shabti_core::traits::EmbeddingModel;
 use shabti_embedding::FastEmbedModel;
 
@@ -237,10 +235,7 @@ fn f1_benchmark_adaptive_threshold() {
         .collect();
 
     // Ground truth references
-    let all_ground_truth: Vec<&[usize]> = conversations
-        .iter()
-        .map(|c| c.ground_truth)
-        .collect();
+    let all_ground_truth: Vec<&[usize]> = conversations.iter().map(|c| c.ground_truth).collect();
 
     // Parameter grid
     let window_sizes = [2, 3, 5];
@@ -275,9 +270,7 @@ fn f1_benchmark_adaptive_threshold() {
             let (precision, recall, f1) =
                 micro_averaged_f1(&all_detected, &all_ground_truth, tolerance);
 
-            println!(
-                "  w={ws} s={sens:.1}  P={precision:.3}  R={recall:.3}  F1={f1:.3}"
-            );
+            println!("  w={ws} s={sens:.1}  P={precision:.3}  R={recall:.3}  F1={f1:.3}");
 
             if f1 > best_f1 {
                 best_f1 = f1;
@@ -316,10 +309,7 @@ fn f1_benchmark_adaptive_threshold() {
         );
     }
 
-    assert!(
-        best_f1 >= 0.75,
-        "Best F1 ({best_f1:.3}) should be >= 0.75"
-    );
+    assert!(best_f1 >= 0.75, "Best F1 ({best_f1:.3}) should be >= 0.75");
 }
 
 /// Check if detected boundaries match ground truth within tolerance.
@@ -356,10 +346,7 @@ fn distance_pattern_sanity_check() {
         "経済指標が悪化しています",
     ];
 
-    let embeddings: Vec<Vec<f32>> = utterances
-        .iter()
-        .map(|u| model.embed(u).unwrap())
-        .collect();
+    let embeddings: Vec<Vec<f32>> = utterances.iter().map(|u| model.embed(u).unwrap()).collect();
 
     let distances = consecutive_distances(&embeddings);
 
