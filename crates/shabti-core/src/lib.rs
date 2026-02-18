@@ -1,3 +1,4 @@
+pub mod clustering;
 pub mod dedup;
 pub mod entry;
 pub mod error;
