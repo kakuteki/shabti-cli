@@ -6,6 +6,7 @@ pub mod error;
 pub mod event;
 pub mod gate;
 pub mod near_dedup;
+pub mod query;
 pub mod resolution;
 pub mod scoring;
 pub mod traits;
