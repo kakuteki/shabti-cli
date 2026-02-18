@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = [
+    "fastembed-poc",
+    "qdrant-poc",
+    "petgraph-poc",
+    "event-segmentation",
+    "hdbscan-poc",
+]

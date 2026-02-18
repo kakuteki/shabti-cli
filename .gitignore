@@ -1,3 +1,7 @@
 node_modules/
 coverage/
 .env
+
+# Rust
+poc/target/
+.fastembed_cache/
