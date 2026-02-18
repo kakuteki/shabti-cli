@@ -3,11 +3,16 @@
   "version": "1.0.0",
   "description": "Demo CLI tool — showcasing npm-publishable CLI structure",
   "type": "module",
+  "main": "native.cjs",
+  "types": "native.d.ts",
   "bin": {
     "shabti": "src/index.js"
   },
   "files": [
-    "src/"
+    "src/",
+    "native.cjs",
+    "native.d.ts",
+    "*.node"
   ],
   "napi": {
     "binaryName": "shabti",

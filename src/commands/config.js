@@ -44,4 +44,24 @@ export function registerConfig(program) {
       saveConfig(config);
       success(`${key} = ${value}`);
     });
+
+  cmd
+    .command("setup")
+    .description("Show Qdrant setup instructions")
+    .action(() => {
+      const config = loadConfig();
+      heading("Qdrant Setup");
+      console.log();
+      console.log("  shabti requires a running Qdrant instance for vector storage.");
+      console.log();
+      console.log(chalk.cyan("  Quick start with Docker:"));
+      console.log();
+      console.log(`    docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant`);
+      console.log();
+      console.log(`  Current Qdrant URL: ${chalk.yellow(config.qdrant_url)}`);
+      console.log();
+      console.log("  To change the URL:");
+      console.log(`    shabti config set qdrant_url ${chalk.dim("<url>")}`);
+      console.log();
+    });
 }
