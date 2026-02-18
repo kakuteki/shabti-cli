@@ -1,6 +1,6 @@
 {
   "name": "shabti",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Demo CLI tool — showcasing npm-publishable CLI structure",
   "type": "module",
   "main": "native.cjs",
