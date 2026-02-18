@@ -31,6 +31,9 @@ petgraph = "0.7"
 # Clustering
 hdbscan = "0.12"
 
+# Text analysis
+regex = "1"
+
 # Serialization
 bincode = "2"
 crc32fast = "1"
