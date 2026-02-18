@@ -525,10 +525,10 @@ impl ShabtiEngine {
             let composite = semantic_sim * decay * boost;
 
             // Filter: min_score
-            if let Some(min) = query.min_score {
-                if composite < min {
-                    continue;
-                }
+            if let Some(min) = query.min_score
+                && composite < min
+            {
+                continue;
             }
 
             let explanation = if query.with_explanation {

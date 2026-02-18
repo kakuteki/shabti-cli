@@ -1,4 +1,4 @@
-/// Composable Query DSL for memory search.
+//! Composable Query DSL for memory search.
 
 /// A compiled query with all search parameters.
 #[derive(Debug, Clone)]

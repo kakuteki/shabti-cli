@@ -1,4 +1,4 @@
-/// Multi-resolution embedding aggregation (Level 0→1→2).
+//! Multi-resolution embedding aggregation (Level 0→1→2).
 
 /// L2-normalize a vector. Returns zero vector if input is zero.
 pub fn normalize_l2(v: &[f32]) -> Vec<f32> {
