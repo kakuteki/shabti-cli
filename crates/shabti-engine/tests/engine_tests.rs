@@ -6,7 +6,10 @@ use tempfile::TempDir;
 use uuid::Uuid;
 
 fn test_config(dir: &TempDir) -> EngineConfig {
-    let collection = format!("engine_test_{}", Uuid::new_v4().to_string().replace('-', ""));
+    let collection = format!(
+        "engine_test_{}",
+        Uuid::new_v4().to_string().replace('-', "")
+    );
     EngineConfig {
         qdrant_url: "http://localhost:6334".to_string(),
         collection_name: collection,
@@ -69,7 +72,10 @@ async fn search_similar_finds_stored_entry() {
         .await
         .unwrap();
 
-    let results = engine.search_similar("I love kittens", 10, None).await.unwrap();
+    let results = engine
+        .search_similar("I love kittens", 10, None)
+        .await
+        .unwrap();
     assert!(!results.is_empty());
     // The cat-related entry should be the top result
     assert!(results[0].entry.content.contains("cats"));
@@ -189,7 +195,10 @@ async fn entry_count_and_feature_gate() {
     let engine = ShabtiEngine::new(test_config(&dir)).await.unwrap();
 
     assert_eq!(engine.entry_count(), 0);
-    assert_eq!(engine.feature_gate().tier, shabti_core::gate::DataTier::Minimal);
+    assert_eq!(
+        engine.feature_gate().tier,
+        shabti_core::gate::DataTier::Minimal
+    );
 
     engine
         .store("entry 1", &StoreOptions::default())

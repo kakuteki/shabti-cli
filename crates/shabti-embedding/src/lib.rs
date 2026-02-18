@@ -17,10 +17,9 @@ impl FastEmbedModel {
 
     pub fn with_model(model_type: FEModel) -> ShabtiResult<Self> {
         let model_id = format!("{model_type:?}");
-        let mut model = TextEmbedding::try_new(
-            InitOptions::new(model_type).with_show_download_progress(false),
-        )
-        .map_err(|e| ShabtiError::Embedding(e.to_string()))?;
+        let mut model =
+            TextEmbedding::try_new(InitOptions::new(model_type).with_show_download_progress(false))
+                .map_err(|e| ShabtiError::Embedding(e.to_string()))?;
 
         // Probe dimension by embedding a dummy text
         let probe = model

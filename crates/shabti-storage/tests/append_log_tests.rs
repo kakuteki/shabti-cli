@@ -3,7 +3,11 @@ use shabti_storage::AppendLog;
 use tempfile::TempDir;
 
 fn make_entry(content: &str) -> MemoryEntry {
-    MemoryEntry::new(content.to_string(), vec![0.1, 0.2, 0.3], "test-model".to_string())
+    MemoryEntry::new(
+        content.to_string(),
+        vec![0.1, 0.2, 0.3],
+        "test-model".to_string(),
+    )
 }
 
 #[test]
@@ -109,8 +113,9 @@ fn reopen_preserves_many_entries() {
     let dir = TempDir::new().unwrap();
     let path = dir.path().join("test.log");
 
-    let entries: Vec<MemoryEntry> =
-        (0..100).map(|i| make_entry(&format!("entry {i}"))).collect();
+    let entries: Vec<MemoryEntry> = (0..100)
+        .map(|i| make_entry(&format!("entry {i}")))
+        .collect();
 
     {
         let mut log = AppendLog::open(&path).unwrap();

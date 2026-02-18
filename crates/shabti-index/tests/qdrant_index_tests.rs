@@ -100,10 +100,7 @@ async fn update_payload_modifies_metadata() {
     let id = entry.id;
     index.insert(&entry).await.unwrap();
 
-    index
-        .update_access(id, 5, 1700000000)
-        .await
-        .unwrap();
+    index.update_access(id, 5, 1700000000).await.unwrap();
 
     let results = index
         .search(&[1.0, 0.0, 0.0], 1, &SearchOptions::default())
@@ -169,7 +166,7 @@ async fn search_excludes_non_active_lifecycle() {
     let col = unique_collection();
     let index = QdrantIndex::new(test_config(&col)).await.unwrap();
 
-    let mut e1 = make_entry("active", vec![1.0, 0.0, 0.0]);
+    let e1 = make_entry("active", vec![1.0, 0.0, 0.0]);
     let mut e2 = make_entry("archived", vec![0.9, 0.1, 0.0]);
     e2.lifecycle_state = LifecycleState::Archived;
 

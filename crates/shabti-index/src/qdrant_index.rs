@@ -1,9 +1,8 @@
 use qdrant_client::qdrant::vectors_config::Config;
 use qdrant_client::qdrant::{
     Condition, CreateCollectionBuilder, DeletePointsBuilder, Distance, Filter,
-    HnswConfigDiffBuilder, PointStruct, Range, ScrollPointsBuilder,
-    SearchPointsBuilder, SetPayloadPointsBuilder, UpsertPointsBuilder, VectorParamsBuilder,
-    VectorsConfig,
+    HnswConfigDiffBuilder, PointStruct, Range, ScrollPointsBuilder, SearchPointsBuilder,
+    SetPayloadPointsBuilder, UpsertPointsBuilder, VectorParamsBuilder, VectorsConfig,
 };
 use qdrant_client::{Payload, Qdrant};
 use serde_json::json;
@@ -60,15 +59,13 @@ impl QdrantIndex {
         if !exists {
             client
                 .create_collection(
-                    CreateCollectionBuilder::new(&collection_name).vectors_config(
-                        VectorsConfig {
-                            config: Some(Config::Params(
-                                VectorParamsBuilder::new(config.vector_size, Distance::Cosine)
-                                    .hnsw_config(HnswConfigDiffBuilder::default())
-                                    .build(),
-                            )),
-                        },
-                    ),
+                    CreateCollectionBuilder::new(&collection_name).vectors_config(VectorsConfig {
+                        config: Some(Config::Params(
+                            VectorParamsBuilder::new(config.vector_size, Distance::Cosine)
+                                .hnsw_config(HnswConfigDiffBuilder::default())
+                                .build(),
+                        )),
+                    }),
                 )
                 .await
                 .map_err(|e| ShabtiError::Index(e.to_string()))?;
@@ -101,13 +98,10 @@ impl QdrantIndex {
     ) -> ShabtiResult<Vec<SearchHit>> {
         let filter = build_filter(options, true);
 
-        let mut builder = SearchPointsBuilder::new(
-            &self.collection_name,
-            embedding.to_vec(),
-            limit as u64,
-        )
-        .filter(filter)
-        .with_payload(true);
+        let mut builder =
+            SearchPointsBuilder::new(&self.collection_name, embedding.to_vec(), limit as u64)
+                .filter(filter)
+                .with_payload(true);
 
         if let Some(min_score) = options.min_score {
             builder = builder.score_threshold(min_score);
@@ -197,8 +191,8 @@ impl QdrantIndex {
             "access_count": access_count,
             "last_accessed": last_accessed,
         });
-        let payload: Payload = Payload::try_from(payload_json)
-            .map_err(|e| ShabtiError::Index(e.to_string()))?;
+        let payload: Payload =
+            Payload::try_from(payload_json).map_err(|e| ShabtiError::Index(e.to_string()))?;
 
         self.client
             .set_payload(
@@ -243,9 +237,7 @@ fn build_filter(options: &SearchOptions, active_only: bool) -> Filter {
         if let Some(end) = tr.end {
             range.lt = Some(end as f64);
         }
-        filter
-            .must
-            .push(Condition::range("created_at", range));
+        filter.must.push(Condition::range("created_at", range));
     }
 
     filter
@@ -259,8 +251,8 @@ fn entry_to_payload(entry: &MemoryEntry) -> Payload {
         "created_at": entry.created_at,
         "session_id": entry.session_id,
         "namespace": entry.namespace,
-        "lifecycle_state": serde_json::to_value(&entry.lifecycle_state).unwrap_or_default(),
-        "origin_type": serde_json::to_value(&entry.origin_type).unwrap_or_default(),
+        "lifecycle_state": serde_json::to_value(entry.lifecycle_state).unwrap_or_default(),
+        "origin_type": serde_json::to_value(entry.origin_type).unwrap_or_default(),
         "access_count": entry.access_count as i64,
         "last_accessed": entry.last_accessed,
         "gap_before": entry.gap_before,
@@ -285,18 +277,12 @@ fn extract_u32(
     payload: &std::collections::HashMap<String, qdrant_client::qdrant::Value>,
     key: &str,
 ) -> u32 {
-    payload
-        .get(key)
-        .and_then(|v| v.as_integer())
-        .unwrap_or(0) as u32
+    payload.get(key).and_then(|v| v.as_integer()).unwrap_or(0) as u32
 }
 
 fn extract_i64(
     payload: &std::collections::HashMap<String, qdrant_client::qdrant::Value>,
     key: &str,
 ) -> i64 {
-    payload
-        .get(key)
-        .and_then(|v| v.as_integer())
-        .unwrap_or(0)
+    payload.get(key).and_then(|v| v.as_integer()).unwrap_or(0)
 }

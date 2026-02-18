@@ -77,7 +77,10 @@ impl ShabtiEngine {
         // Check dedup first (single lock acquisition to avoid deadlock)
         let content_hash = MemoryEntry::content_hash_of(content);
         {
-            let mut dedup = self.dedup.lock().map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            let mut dedup = self
+                .dedup
+                .lock()
+                .map_err(|e| ShabtiError::Storage(e.to_string()))?;
             if dedup.contains(&content_hash) {
                 let result = dedup.check_and_insert(&content_hash, Uuid::new_v4());
                 return Ok(result);
@@ -115,13 +118,19 @@ impl ShabtiEngine {
 
         // Register in dedup
         {
-            let mut dedup = self.dedup.lock().map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            let mut dedup = self
+                .dedup
+                .lock()
+                .map_err(|e| ShabtiError::Storage(e.to_string()))?;
             dedup.check_and_insert(&entry.content_hash, id);
         }
 
         // Write to append log
         {
-            let mut log = self.log.lock().map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            let mut log = self
+                .log
+                .lock()
+                .map_err(|e| ShabtiError::Storage(e.to_string()))?;
             log.append(&entry)?;
         }
 
@@ -130,7 +139,10 @@ impl ShabtiEngine {
 
         // Update count
         {
-            let mut count = self.entry_count.lock().map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            let mut count = self
+                .entry_count
+                .lock()
+                .map_err(|e| ShabtiError::Storage(e.to_string()))?;
             *count += 1;
         }
 
@@ -138,7 +150,10 @@ impl ShabtiEngine {
     }
 
     pub async fn get(&self, id: Uuid) -> ShabtiResult<MemoryEntry> {
-        let log = self.log.lock().map_err(|e| ShabtiError::Storage(e.to_string()))?;
+        let log = self
+            .log
+            .lock()
+            .map_err(|e| ShabtiError::Storage(e.to_string()))?;
         log.read(id)
     }
 
@@ -157,7 +172,10 @@ impl ShabtiEngine {
 
         let hits = self.index.search(&query_embedding, limit, &opts).await?;
 
-        let log = self.log.lock().map_err(|e| ShabtiError::Storage(e.to_string()))?;
+        let log = self
+            .log
+            .lock()
+            .map_err(|e| ShabtiError::Storage(e.to_string()))?;
         let mut results = Vec::new();
         for hit in hits {
             if let Ok(entry) = log.read(hit.id) {
@@ -178,7 +196,10 @@ impl ShabtiEngine {
     ) -> ShabtiResult<Vec<MemoryEntry>> {
         let hits = self.index.search_by_time(range, limit).await?;
 
-        let log = self.log.lock().map_err(|e| ShabtiError::Storage(e.to_string()))?;
+        let log = self
+            .log
+            .lock()
+            .map_err(|e| ShabtiError::Storage(e.to_string()))?;
         let mut results = Vec::new();
         for hit in hits {
             if let Ok(entry) = log.read(hit.id) {

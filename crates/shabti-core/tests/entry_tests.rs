@@ -50,7 +50,10 @@ fn whitespace_difference_produces_different_hash() {
 #[test]
 fn content_hash_of_matches_entry_hash() {
     let entry = MemoryEntry::new("test content".into(), vec![0.1; 3], "m".into());
-    assert_eq!(entry.content_hash, MemoryEntry::content_hash_of("test content"));
+    assert_eq!(
+        entry.content_hash,
+        MemoryEntry::content_hash_of("test content")
+    );
 }
 
 #[test]
