@@ -1,0 +1,15 @@
+{
+  "name": "napi-poc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "napi": {
+    "binaryName": "napi-poc",
+    "targets": []
+  },
+  "scripts": {
+    "build": "napi build --release --js index.js --dts index.d.ts",
+    "build:debug": "napi build --js index.js --dts index.d.ts",
+    "test": "node --test __test__/index.test.mjs"
+  }
+}

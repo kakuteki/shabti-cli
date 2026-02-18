@@ -4,4 +4,6 @@ coverage/
 
 # Rust
 poc/target/
+poc/napi-poc/target/
 .fastembed_cache/
+*.node
