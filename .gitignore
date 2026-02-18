@@ -3,6 +3,7 @@ coverage/
 .env
 
 # Rust
+target/
 poc/target/
 poc/napi-poc/target/
 .fastembed_cache/
