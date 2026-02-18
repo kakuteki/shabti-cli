@@ -38,5 +38,9 @@ regex = "1"
 bincode = "2"
 crc32fast = "1"
 
+# Node.js bindings
+napi = { version = "3", features = ["async", "serde-json"] }
+napi-derive = "3"
+
 # Testing
 tempfile = "3"

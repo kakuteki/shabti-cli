@@ -8,3 +8,7 @@ poc/target/
 poc/napi-poc/target/
 .fastembed_cache/
 *.node
+
+# napi-rs build output
+native.cjs
+native.d.ts

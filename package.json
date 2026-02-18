@@ -9,8 +9,17 @@
   "files": [
     "src/"
   ],
+  "napi": {
+    "binaryName": "shabti",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "aarch64-apple-darwin",
+      "x86_64-unknown-linux-gnu"
+    ]
+  },
   "scripts": {
     "start": "node src/index.js",
+    "build:napi": "napi build --platform -p shabti-napi --js native.cjs --dts native.d.ts -o .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src/ tests/",
@@ -54,6 +63,7 @@
     "@commitlint/cli": "^20.4.1",
     "@commitlint/config-conventional": "^20.4.1",
     "@eslint/js": "^10.0.1",
+    "@napi-rs/cli": "^3.5.1",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
