@@ -1,0 +1,36 @@
+[workspace]
+members = ["crates/*"]
+exclude = ["poc"]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/kakuteki/shabti-cli"
+
+[workspace.dependencies]
+# Core
+uuid = { version = "1", features = ["v4", "serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+sha2 = "0.10"
+
+# Async
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "io-util", "sync"] }
+
+# Embedding
+fastembed = "5"
+
+# Vector DB
+qdrant-client = "1.16"
+
+# Graph
+petgraph = "0.7"
+
+# Serialization
+bincode = "2"
+crc32fast = "1"
+
+# Testing
+tempfile = "3"
