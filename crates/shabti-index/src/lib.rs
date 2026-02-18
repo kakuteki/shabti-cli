@@ -1,2 +1,3 @@
-// shabti-index: Qdrant client wrapper
-// Full implementation in Phase 1 index task
+mod qdrant_index;
+
+pub use qdrant_index::{IndexConfig, QdrantIndex, SearchHit, SearchOptions, TimeRange};
