@@ -6,6 +6,8 @@ use shabti_core::dedup::{DedupChecker, StoreResult};
 use shabti_core::entry::{MemoryEntry, MemoryEntryBuilder};
 use shabti_core::error::{ShabtiError, ShabtiResult};
 use shabti_core::gate::FeatureGate;
+use shabti_core::query::{Query, SearchExplanation};
+use shabti_core::scoring::{self, TimeDecayConfig};
 use shabti_core::traits::EmbeddingModel;
 use shabti_core::types::OriginType;
 use shabti_embedding::FastEmbedModel;
@@ -35,6 +37,14 @@ pub struct StoreOptions {
 pub struct SearchResult {
     pub entry: MemoryEntry,
     pub score: f32,
+}
+
+/// Result from execute_query with optional score explanation.
+#[derive(Debug, Clone)]
+pub struct QueryResult {
+    pub entry: MemoryEntry,
+    pub score: f32,
+    pub explanation: Option<SearchExplanation>,
 }
 
 /// k-NN link generation parameters.
@@ -439,6 +449,117 @@ impl ShabtiEngine {
         // For a more robust solution we'd use a barrier, but this suffices for tests.
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         Ok(())
+    }
+
+    /// Execute a composable query with time decay scoring and optional explanation.
+    pub async fn execute_query(&self, query: &Query) -> ShabtiResult<Vec<QueryResult>> {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time before UNIX epoch")
+            .as_secs() as i64;
+        let decay_config = TimeDecayConfig::default();
+
+        // Build search options
+        let opts = SearchOptions {
+            namespace: query.namespace.clone(),
+            time_range: if query.time_start.is_some() || query.time_end.is_some() {
+                Some(TimeRange {
+                    start: query.time_start,
+                    end: query.time_end,
+                })
+            } else {
+                None
+            },
+            ..Default::default()
+        };
+
+        // Embed query text
+        let query_embedding = self.embedding.embed(&query.text)?;
+
+        // Fetch more candidates than limit so filtering still yields enough
+        let fetch_limit = query.limit * 3;
+
+        // Route: use graph link expansion if max_hops > 0, else vector search
+        let raw_results = if query.max_hops > 0 {
+            // search_with_links handles vector search + graph expansion internally
+            self.search_with_links(
+                &query.text,
+                fetch_limit,
+                query.max_hops,
+                query.namespace.as_deref(),
+            )
+            .await?
+        } else {
+            // Direct vector search with options
+            let hits = self.index.search(&query_embedding, fetch_limit, &opts).await?;
+            let log = self
+                .log
+                .lock()
+                .map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            let mut results = Vec::new();
+            for hit in hits {
+                if let Ok(entry) = log.read(hit.id) {
+                    results.push(SearchResult {
+                        entry,
+                        score: hit.score,
+                    });
+                }
+            }
+            results
+        };
+
+        // Apply time decay scoring, filtering, and explanation
+        let mut query_results = Vec::new();
+        for sr in raw_results {
+            // Filter: exclude superseded entries
+            if query.exclude_superseded && sr.entry.superseded_by.is_some() {
+                continue;
+            }
+
+            let semantic_sim = sr.score;
+            let decay = scoring::time_decay(sr.entry.created_at, now, &decay_config);
+            let boost = scoring::access_boost(sr.entry.access_count);
+            let composite = semantic_sim * decay * boost;
+
+            // Filter: min_score
+            if let Some(min) = query.min_score {
+                if composite < min {
+                    continue;
+                }
+            }
+
+            let explanation = if query.with_explanation {
+                Some(SearchExplanation {
+                    semantic_similarity: semantic_sim,
+                    time_decay_factor: decay,
+                    access_boost_factor: boost,
+                    matched_at_level: 0,
+                    link_hops: 0,
+                    is_superseded: sr.entry.superseded_by.is_some(),
+                    dedupe_count: 0,
+                })
+            } else {
+                None
+            };
+
+            query_results.push(QueryResult {
+                entry: sr.entry,
+                score: composite,
+                explanation,
+            });
+        }
+
+        // Sort by composite score descending
+        query_results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        // Apply limit
+        query_results.truncate(query.limit);
+
+        Ok(query_results)
     }
 
     /// Gracefully shut down the background indexer.
