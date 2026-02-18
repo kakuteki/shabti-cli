@@ -1,4 +1,4 @@
-use shabti_core::resolution::{aggregate_embeddings, normalize_l2, SessionSummary};
+use shabti_core::resolution::{SessionSummary, aggregate_embeddings, normalize_l2};
 
 // ============================================================
 // L2 normalization
@@ -102,10 +102,7 @@ fn aggregate_result_is_l2_normalized() {
 #[test]
 fn session_summary_from_single_event() {
     let event_embeddings = vec![vec![1.0f32, 0.0, 0.0]];
-    let summary = SessionSummary::from_event_embeddings(
-        "sess-1".to_string(),
-        &event_embeddings,
-    );
+    let summary = SessionSummary::from_event_embeddings("sess-1".to_string(), &event_embeddings);
     assert_eq!(summary.session_id, "sess-1");
     assert_eq!(summary.event_count, 1);
     let norm: f32 = summary.embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
@@ -119,10 +116,7 @@ fn session_summary_from_multiple_events() {
         vec![0.0, 1.0, 0.0],
         vec![0.0, 0.0, 1.0],
     ];
-    let summary = SessionSummary::from_event_embeddings(
-        "sess-2".to_string(),
-        &event_embeddings,
-    );
+    let summary = SessionSummary::from_event_embeddings("sess-2".to_string(), &event_embeddings);
     assert_eq!(summary.event_count, 3);
     // All three components should be roughly equal
     let max = summary.embedding.iter().cloned().fold(0.0f32, f32::max);
@@ -135,10 +129,7 @@ fn session_summary_from_multiple_events() {
 
 #[test]
 fn session_summary_empty_events() {
-    let summary = SessionSummary::from_event_embeddings(
-        "sess-empty".to_string(),
-        &[],
-    );
+    let summary = SessionSummary::from_event_embeddings("sess-empty".to_string(), &[]);
     assert_eq!(summary.event_count, 0);
     assert!(summary.embedding.is_empty());
 }

@@ -1,6 +1,4 @@
-use shabti_core::scoring::{
-    access_boost, composite_score, time_decay, TimeDecayConfig,
-};
+use shabti_core::scoring::{TimeDecayConfig, access_boost, composite_score, time_decay};
 
 // ============================================================
 // Time decay
@@ -27,10 +25,7 @@ fn time_decay_old_memory_decays() {
         decay < 1.0,
         "30-day-old memory should have decay < 1.0, got {decay}"
     );
-    assert!(
-        decay > 0.0,
-        "decay should be positive, got {decay}"
-    );
+    assert!(decay > 0.0, "decay should be positive, got {decay}");
 }
 
 #[test]
@@ -191,5 +186,8 @@ fn composite_score_clamped_to_zero_one() {
     let score = composite_score(1.0, now, 10000, now, &config);
     // Not clamped to 1.0 since access_boost can push above,
     // but should be positive and finite
-    assert!(score > 0.0 && score.is_finite(), "score should be finite positive, got {score}");
+    assert!(
+        score > 0.0 && score.is_finite(),
+        "score should be finite positive, got {score}"
+    );
 }

@@ -21,67 +21,51 @@ fn builder_default_values() {
 
 #[test]
 fn builder_semantic_query() {
-    let query = QueryBuilder::new("find cats")
-        .limit(5)
-        .build();
+    let query = QueryBuilder::new("find cats").limit(5).build();
     assert_eq!(query.text, "find cats");
     assert_eq!(query.limit, 5);
 }
 
 #[test]
 fn builder_time_range() {
-    let query = QueryBuilder::new("query")
-        .time_range(1000, 2000)
-        .build();
+    let query = QueryBuilder::new("query").time_range(1000, 2000).build();
     assert_eq!(query.time_start, Some(1000));
     assert_eq!(query.time_end, Some(2000));
 }
 
 #[test]
 fn builder_namespace_filter() {
-    let query = QueryBuilder::new("query")
-        .namespace("tenant-a")
-        .build();
+    let query = QueryBuilder::new("query").namespace("tenant-a").build();
     assert_eq!(query.namespace.as_deref(), Some("tenant-a"));
 }
 
 #[test]
 fn builder_cluster_filter() {
-    let query = QueryBuilder::new("query")
-        .in_cluster(3)
-        .build();
+    let query = QueryBuilder::new("query").in_cluster(3).build();
     assert_eq!(query.cluster_id, Some(3));
 }
 
 #[test]
 fn builder_follow_links() {
-    let query = QueryBuilder::new("query")
-        .follow_links(2)
-        .build();
+    let query = QueryBuilder::new("query").follow_links(2).build();
     assert_eq!(query.max_hops, 2);
 }
 
 #[test]
 fn builder_min_score() {
-    let query = QueryBuilder::new("query")
-        .min_score(0.5)
-        .build();
+    let query = QueryBuilder::new("query").min_score(0.5).build();
     assert_eq!(query.min_score, Some(0.5));
 }
 
 #[test]
 fn builder_exclude_superseded() {
-    let query = QueryBuilder::new("query")
-        .exclude_superseded()
-        .build();
+    let query = QueryBuilder::new("query").exclude_superseded().build();
     assert!(query.exclude_superseded);
 }
 
 #[test]
 fn builder_with_explanation() {
-    let query = QueryBuilder::new("query")
-        .with_explanation()
-        .build();
+    let query = QueryBuilder::new("query").with_explanation().build();
     assert!(query.with_explanation);
 }
 

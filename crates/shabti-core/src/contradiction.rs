@@ -8,8 +8,7 @@ pub enum ContradictionType {
     NegationDifference,
 }
 
-static NUMBER_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\d+\.?\d*").unwrap());
+static NUMBER_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\d+\.?\d*").unwrap());
 
 static NEGATION_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![

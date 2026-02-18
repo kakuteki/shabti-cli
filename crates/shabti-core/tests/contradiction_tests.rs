@@ -1,5 +1,5 @@
 use shabti_core::contradiction::{
-    extract_numbers, has_negation, detect_contradiction, ContradictionType,
+    ContradictionType, detect_contradiction, extract_numbers, has_negation,
 };
 
 // ============================================================
@@ -72,10 +72,7 @@ fn no_negation_english() {
 
 #[test]
 fn contradiction_different_numbers() {
-    let result = detect_contradiction(
-        "この商品の価格は1000円です",
-        "この商品の価格は2000円です",
-    );
+    let result = detect_contradiction("この商品の価格は1000円です", "この商品の価格は2000円です");
     assert!(
         result.is_some(),
         "different prices should be a contradiction"
@@ -88,14 +85,8 @@ fn contradiction_different_numbers() {
 
 #[test]
 fn contradiction_negation() {
-    let result = detect_contradiction(
-        "猫が好きです",
-        "猫が好きではない",
-    );
-    assert!(
-        result.is_some(),
-        "negation should be a contradiction"
-    );
+    let result = detect_contradiction("猫が好きです", "猫が好きではない");
+    assert!(result.is_some(), "negation should be a contradiction");
     assert!(matches!(
         result.unwrap(),
         ContradictionType::NegationDifference
@@ -104,11 +95,11 @@ fn contradiction_negation() {
 
 #[test]
 fn no_contradiction_same_content() {
-    let result = detect_contradiction(
-        "東京の天気は晴れです",
-        "東京の天気は晴れです",
+    let result = detect_contradiction("東京の天気は晴れです", "東京の天気は晴れです");
+    assert!(
+        result.is_none(),
+        "identical content should not be a contradiction"
     );
-    assert!(result.is_none(), "identical content should not be a contradiction");
 }
 
 #[test]
@@ -117,15 +108,15 @@ fn no_contradiction_complementary() {
         "猫はペットとして人気があります",
         "犬もペットとして愛されています",
     );
-    assert!(result.is_none(), "complementary content should not be a contradiction");
+    assert!(
+        result.is_none(),
+        "complementary content should not be a contradiction"
+    );
 }
 
 #[test]
 fn contradiction_english_numbers() {
-    let result = detect_contradiction(
-        "The population is 1000000",
-        "The population is 2000000",
-    );
+    let result = detect_contradiction("The population is 1000000", "The population is 2000000");
     assert!(result.is_some());
 }
 

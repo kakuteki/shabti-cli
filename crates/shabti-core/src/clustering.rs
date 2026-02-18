@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use hdbscan::{DistanceMetric, Hdbscan, HdbscanHyperParams};
 
-use crate::resolution::{aggregate_embeddings, normalize_l2, SessionSummary};
+use crate::resolution::{SessionSummary, aggregate_embeddings, normalize_l2};
 
 /// A topic cluster discovered by HDBSCAN.
 #[derive(Debug, Clone)]
@@ -20,10 +20,7 @@ pub struct TopicCluster {
 /// Cluster session embeddings using HDBSCAN.
 /// Returns topic clusters (noise points are excluded).
 /// Empty input returns empty vec.
-pub fn cluster_sessions(
-    sessions: &[SessionSummary],
-    min_cluster_size: usize,
-) -> Vec<TopicCluster> {
+pub fn cluster_sessions(sessions: &[SessionSummary], min_cluster_size: usize) -> Vec<TopicCluster> {
     if sessions.len() < min_cluster_size {
         return Vec::new();
     }
@@ -71,8 +68,10 @@ pub fn cluster_sessions(
                 .collect();
 
             // Compute centroid as mean of cluster member embeddings
-            let embeddings: Vec<Vec<f32>> =
-                indices.iter().map(|&i| sessions[i].embedding.clone()).collect();
+            let embeddings: Vec<Vec<f32>> = indices
+                .iter()
+                .map(|&i| sessions[i].embedding.clone())
+                .collect();
             let weights: Vec<f32> = vec![1.0; embeddings.len()];
             let centroid = aggregate_embeddings(&embeddings, &weights);
 

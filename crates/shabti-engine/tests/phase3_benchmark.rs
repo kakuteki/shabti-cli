@@ -5,10 +5,7 @@ use tempfile::TempDir;
 use uuid::Uuid;
 
 fn test_config(dir: &TempDir) -> EngineConfig {
-    let collection = format!(
-        "bench_{}",
-        Uuid::new_v4().to_string().replace('-', "")
-    );
+    let collection = format!("bench_{}", Uuid::new_v4().to_string().replace('-', ""));
     EngineConfig {
         qdrant_url: "http://localhost:6334".to_string(),
         collection_name: collection,
@@ -68,10 +65,19 @@ async fn recall_at_10() {
     // Define query-relevance pairs: (query, expected substring in at least one top-10 result)
     let test_cases: Vec<(&str, Vec<&str>)> = vec![
         ("I love kittens and puppies", vec!["Cats", "Dogs"]),
-        ("deep learning and AI", vec!["Neural", "Machine learning", "Artificial intelligence"]),
+        (
+            "deep learning and AI",
+            vec!["Neural", "Machine learning", "Artificial intelligence"],
+        ),
         ("Rust memory safety", vec!["Rust programming"]),
-        ("renewable energy and sustainability", vec!["Sustainable", "Electric vehicles"]),
-        ("biology and genetics", vec!["genome", "Photosynthesis", "Microbiome"]),
+        (
+            "renewable energy and sustainability",
+            vec!["Sustainable", "Electric vehicles"],
+        ),
+        (
+            "biology and genetics",
+            vec!["genome", "Photosynthesis", "Microbiome"],
+        ),
     ];
 
     let mut hits = 0;
@@ -134,7 +140,10 @@ async fn insert_latency_p99() {
     let mean = latencies_ms.iter().sum::<f64>() / latencies_ms.len() as f64;
 
     println!("\n{:=<70}", "");
-    println!("  Insert Latency Benchmark ({} entries)", BENCHMARK_CORPUS.len());
+    println!(
+        "  Insert Latency Benchmark ({} entries)",
+        BENCHMARK_CORPUS.len()
+    );
     println!("{:=<70}", "");
     println!("  Mean:  {mean:.2} ms");
     println!("  p50:   {p50:.2} ms");
@@ -197,7 +206,11 @@ async fn search_latency_p99() {
     let mean = latencies_ms.iter().sum::<f64>() / latencies_ms.len() as f64;
 
     println!("\n{:=<70}", "");
-    println!("  Search Latency Benchmark ({} queries over {} entries)", queries.len(), BENCHMARK_CORPUS.len());
+    println!(
+        "  Search Latency Benchmark ({} queries over {} entries)",
+        queries.len(),
+        BENCHMARK_CORPUS.len()
+    );
     println!("{:=<70}", "");
     println!("  Mean:  {mean:.2} ms");
     println!("  p50:   {p50:.2} ms");

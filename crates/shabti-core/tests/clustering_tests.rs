@@ -1,4 +1,4 @@
-use shabti_core::clustering::{cluster_sessions, TopicCluster};
+use shabti_core::clustering::{TopicCluster, cluster_sessions};
 use shabti_core::resolution::SessionSummary;
 
 fn make_session(id: &str, embedding: Vec<f32>) -> SessionSummary {

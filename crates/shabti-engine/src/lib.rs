@@ -491,7 +491,10 @@ impl ShabtiEngine {
             .await?
         } else {
             // Direct vector search with options
-            let hits = self.index.search(&query_embedding, fetch_limit, &opts).await?;
+            let hits = self
+                .index
+                .search(&query_embedding, fetch_limit, &opts)
+                .await?;
             let log = self
                 .log
                 .lock()
