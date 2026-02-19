@@ -8,6 +8,7 @@ pub mod event;
 pub mod gate;
 pub mod health;
 pub mod mcp;
+pub mod metrics;
 pub mod namespace;
 pub mod near_dedup;
 pub mod orchestrator;
