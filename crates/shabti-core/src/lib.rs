@@ -11,6 +11,7 @@ pub mod near_dedup;
 pub mod query;
 pub mod resolution;
 pub mod scoring;
+pub mod sharing;
 pub mod traits;
 pub mod types;
 
