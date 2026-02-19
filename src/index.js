@@ -78,6 +78,22 @@ function buildProgram() {
   registerSpin(program);
   registerStatus(program);
   registerStore(program);
+
+  program
+    .command("mcp-config")
+    .description("Print MCP server configuration JSON for Claude Code / Cursor")
+    .action(() => {
+      const config = {
+        mcpServers: {
+          "shabti-memory": {
+            command: "npx",
+            args: ["shabti-mcp"],
+          },
+        },
+      };
+      console.log(JSON.stringify(config, null, 2));
+    });
+
   return program;
 }
 

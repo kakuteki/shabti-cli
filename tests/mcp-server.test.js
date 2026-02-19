@@ -287,6 +287,159 @@ describe("MCP server", () => {
     }
   });
 
+  it.skipIf(!qdrantAvailable)("tools/call memory_delete removes an entry", async () => {
+    const proc = spawnMcp();
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      // Store first
+      const storeRes = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "memory_store",
+          arguments: { content: `delete test ${Date.now()}` },
+        },
+      });
+      const storeOutput = JSON.parse(storeRes.result.content[0].text);
+      const entryId = storeOutput.id;
+      expect(entryId).toBeDefined();
+
+      // Delete
+      const deleteRes = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: {
+          name: "memory_delete",
+          arguments: { id: entryId },
+        },
+      });
+
+      expect(deleteRes.result).toBeDefined();
+      const deleteOutput = JSON.parse(deleteRes.result.content[0].text);
+      expect(deleteOutput.deleted).toBe(true);
+    } finally {
+      proc.kill();
+    }
+  });
+
+  it.skipIf(!qdrantAvailable)("tools/call memory_list returns recent entries", async () => {
+    const proc = spawnMcp();
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      const res = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "memory_list",
+          arguments: { limit: 5 },
+        },
+      });
+
+      expect(res.result).toBeDefined();
+      const output = JSON.parse(res.result.content[0].text);
+      expect(output.entries).toBeInstanceOf(Array);
+    } finally {
+      proc.kill();
+    }
+  });
+
+  it("tools/list includes memory_delete and memory_list", async () => {
+    const proc = spawnMcp();
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      const res = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/list",
+        params: {},
+      });
+
+      const names = res.result.tools.map((t) => t.name);
+      expect(names).toContain("memory_delete");
+      expect(names).toContain("memory_list");
+    } finally {
+      proc.kill();
+    }
+  });
+
+  it("tools/call with unavailable engine returns graceful error", { timeout: 30_000 }, async () => {
+    const proc = spawnMcp({ SHABTI_QDRANT_URL: "http://localhost:19999" });
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      // memory_store should return error, not crash
+      const storeRes = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "memory_store",
+          arguments: { content: "test" },
+        },
+      });
+      expect(storeRes.error).toBeDefined();
+      expect(storeRes.error.code).toBe(-32603);
+
+      // memory_status should return unavailable status, not crash
+      const statusRes = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: {
+          name: "memory_status",
+          arguments: {},
+        },
+      });
+      expect(statusRes.result).toBeDefined();
+      const output = JSON.parse(statusRes.result.content[0].text);
+      expect(output.status).toBe("unavailable");
+    } finally {
+      proc.kill();
+    }
+  });
+
   it.skipIf(!qdrantAvailable)(
     "resources/read shabti://status returns JSON",
     { timeout: 15_000 },

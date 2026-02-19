@@ -128,7 +128,13 @@ npx shabti-mcp
 
 ### Claude Code configuration
 
-Add to your MCP settings:
+Generate the MCP settings JSON:
+
+```bash
+shabti mcp-config
+```
+
+Or manually add to your MCP settings:
 
 ```json
 {
@@ -147,6 +153,8 @@ Add to your MCP settings:
 | --------------- | -------------------------------------- |
 | `memory_store`  | Store a memory entry                   |
 | `memory_search` | Search memories by semantic similarity |
+| `memory_delete` | Delete a memory entry by ID            |
+| `memory_list`   | List recent memory entries             |
 | `memory_status` | Get engine status                      |
 
 ### Available resources

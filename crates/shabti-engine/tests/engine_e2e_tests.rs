@@ -202,6 +202,52 @@ async fn engine_multiple_entries_ranking() {
 }
 
 // ============================================================
+// Delete
+// ============================================================
+
+#[tokio::test]
+async fn engine_delete_removes_from_search() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    let result = engine
+        .store("entry to delete", &StoreOptions::default())
+        .await
+        .unwrap();
+    let id = match result {
+        shabti_core::dedup::StoreResult::Stored(id) => id,
+        _ => panic!("expected Stored"),
+    };
+
+    assert_eq!(engine.entry_count(), 1);
+
+    // Delete
+    engine.delete(id).await.unwrap();
+
+    // Should no longer appear in search
+    let results = engine.search_similar("delete", 10, None).await.unwrap();
+    assert!(results.is_empty());
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn engine_delete_nonexistent_returns_error() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    let fake_id = uuid::Uuid::new_v4();
+    let result = engine.delete(fake_id).await;
+    // Should either succeed silently or return an error, but not panic
+    // Qdrant delete of nonexistent ID is a no-op, so this should be Ok
+    assert!(result.is_ok());
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+// ============================================================
 // Graceful degradation & error handling
 // ============================================================
 

@@ -293,6 +293,20 @@ impl ShabtiNapi {
     }
 
     #[napi]
+    pub async fn delete(&self, id: String) -> Result<()> {
+        let uuid = uuid::Uuid::parse_str(&id)
+            .map_err(|e| Error::from_reason(format!("invalid UUID: {e}")))?;
+
+        let engine = Arc::clone(&self.engine);
+        engine
+            .delete(uuid)
+            .await
+            .map_err(|e| Error::from_reason(format!("{e}")))?;
+
+        Ok(())
+    }
+
+    #[napi]
     pub fn snapshot_create(&self) -> Result<NapiSnapshot> {
         let snap = snapshot::create_snapshot(&self.data_dir, &self.snapshots_dir)
             .map_err(|e| Error::from_reason(format!("{e}")))?;
