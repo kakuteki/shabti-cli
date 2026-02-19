@@ -117,6 +117,45 @@ you> /help
 
 Requires `OPENAI_API_KEY` in `.env` for chat functionality. Memory commands (`/remember`, `/recall`) work with the local Qdrant engine.
 
+## MCP Server
+
+shabti includes an MCP (Model Context Protocol) server for integration with Claude Code, Cursor, and other MCP-compatible tools.
+
+```bash
+# Start the MCP server (stdio transport)
+npx shabti-mcp
+```
+
+### Claude Code configuration
+
+Add to your MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "shabti-memory": {
+      "command": "npx",
+      "args": ["shabti-mcp"]
+    }
+  }
+}
+```
+
+### Available tools
+
+| Tool            | Description                            |
+| --------------- | -------------------------------------- |
+| `memory_store`  | Store a memory entry                   |
+| `memory_search` | Search memories by semantic similarity |
+| `memory_status` | Get engine status                      |
+
+### Available resources
+
+| URI               | Description                  |
+| ----------------- | ---------------------------- |
+| `shabti://status` | Engine status and statistics |
+| `shabti://config` | Current configuration        |
+
 ## Node.js API
 
 ```javascript
