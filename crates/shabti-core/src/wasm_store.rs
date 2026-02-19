@@ -13,8 +13,12 @@ pub struct SearchHit {
 pub trait WasmMemoryStore {
     fn store(&mut self, content: &str, embedding: &[f32], namespace: &str) -> String;
     fn get(&self, id: &str) -> Option<&StoredEntry>;
-    fn search(&self, query_embedding: &[f32], limit: usize, namespace: Option<&str>)
-        -> Vec<SearchHit>;
+    fn search(
+        &self,
+        query_embedding: &[f32],
+        limit: usize,
+        namespace: Option<&str>,
+    ) -> Vec<SearchHit>;
     fn delete(&mut self, id: &str) -> bool;
     fn count(&self) -> usize;
 }

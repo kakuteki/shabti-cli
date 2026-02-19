@@ -99,7 +99,8 @@ impl ProceduralMemory {
                     // Count how many times all steps succeeded
                     let mut successes = 0;
                     for window in self.records.windows(window_size) {
-                        let names: Vec<&str> = window.iter().map(|r| r.tool_name.as_str()).collect();
+                        let names: Vec<&str> =
+                            window.iter().map(|r| r.tool_name.as_str()).collect();
                         if names == seq && window.iter().all(|r| r.success) {
                             successes += 1;
                         }

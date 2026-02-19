@@ -130,7 +130,11 @@ fn registry_find_by_name() {
 #[test]
 fn registry_unregister() {
     let mut registry = A2ARegistry::new();
-    registry.register(AgentCard::new("temp-agent", "Temporary", "https://tmp:8080"));
+    registry.register(AgentCard::new(
+        "temp-agent",
+        "Temporary",
+        "https://tmp:8080",
+    ));
 
     assert_eq!(registry.agents().len(), 1);
     registry.unregister("temp-agent");

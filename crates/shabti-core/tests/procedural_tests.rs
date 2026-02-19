@@ -4,7 +4,13 @@ use shabti_core::procedural::{ActionPattern, ActionRecord, ProceduralMemory};
 
 #[test]
 fn record_action() {
-    let record = ActionRecord::new("web_search", "query: Rust async", "5 results found", true, 120);
+    let record = ActionRecord::new(
+        "web_search",
+        "query: Rust async",
+        "5 results found",
+        true,
+        120,
+    );
 
     assert_eq!(record.tool_name, "web_search");
     assert_eq!(record.input, "query: Rust async");

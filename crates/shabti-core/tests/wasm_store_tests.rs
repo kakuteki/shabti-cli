@@ -56,7 +56,11 @@ fn search_limit() {
     let mut store = InMemoryStore::new();
 
     for i in 0..10 {
-        store.store(&format!("Entry {i}"), &[i as f32 / 10.0, 0.0, 0.0], "default");
+        store.store(
+            &format!("Entry {i}"),
+            &[i as f32 / 10.0, 0.0, 0.0],
+            "default",
+        );
     }
 
     let results = store.search(&[1.0, 0.0, 0.0], 3, None);
