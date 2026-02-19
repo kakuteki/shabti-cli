@@ -4,6 +4,15 @@ import { join } from "path";
 
 const MCP_BIN = join(import.meta.dirname, "..", "src", "mcp", "server.js");
 
+// Check if Qdrant is reachable (for tests that need the engine)
+let qdrantAvailable = false;
+try {
+  const res = await fetch("http://localhost:6333/healthz", { signal: AbortSignal.timeout(2000) });
+  qdrantAvailable = res.ok;
+} catch {
+  // Qdrant not available
+}
+
 /**
  * Send a JSON-RPC request to the MCP server and collect the response.
  */
@@ -161,7 +170,7 @@ describe("MCP server", () => {
     }
   });
 
-  it("tools/call memory_status returns engine status", async () => {
+  it.skipIf(!qdrantAvailable)("tools/call memory_status returns engine status", async () => {
     const proc = spawnMcp();
     try {
       await sendRequest(proc, {
@@ -196,7 +205,7 @@ describe("MCP server", () => {
     }
   });
 
-  it("tools/call memory_store stores content and returns id", async () => {
+  it.skipIf(!qdrantAvailable)("tools/call memory_store stores content and returns id", async () => {
     const proc = spawnMcp();
     try {
       await sendRequest(proc, {
@@ -230,7 +239,7 @@ describe("MCP server", () => {
     }
   });
 
-  it("tools/call memory_search returns results array", async () => {
+  it.skipIf(!qdrantAvailable)("tools/call memory_search returns results array", async () => {
     const proc = spawnMcp();
     try {
       await sendRequest(proc, {
@@ -278,34 +287,38 @@ describe("MCP server", () => {
     }
   });
 
-  it("resources/read shabti://status returns JSON", { timeout: 15_000 }, async () => {
-    const proc = spawnMcp();
-    try {
-      await sendRequest(proc, {
-        jsonrpc: "2.0",
-        id: 1,
-        method: "initialize",
-        params: {
-          protocolVersion: "2024-11-05",
-          capabilities: {},
-          clientInfo: { name: "test", version: "1.0" },
-        },
-      });
+  it.skipIf(!qdrantAvailable)(
+    "resources/read shabti://status returns JSON",
+    { timeout: 15_000 },
+    async () => {
+      const proc = spawnMcp();
+      try {
+        await sendRequest(proc, {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "initialize",
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "test", version: "1.0" },
+          },
+        });
 
-      const res = await sendRequest(proc, {
-        jsonrpc: "2.0",
-        id: 2,
-        method: "resources/read",
-        params: { uri: "shabti://status" },
-      });
+        const res = await sendRequest(proc, {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "resources/read",
+          params: { uri: "shabti://status" },
+        });
 
-      expect(res.result).toBeDefined();
-      expect(res.result.contents).toBeInstanceOf(Array);
-      expect(res.result.contents[0].uri).toBe("shabti://status");
-      const data = JSON.parse(res.result.contents[0].text);
-      expect(data).toHaveProperty("entry_count");
-    } finally {
-      proc.kill();
-    }
-  });
+        expect(res.result).toBeDefined();
+        expect(res.result.contents).toBeInstanceOf(Array);
+        expect(res.result.contents[0].uri).toBe("shabti://status");
+        const data = JSON.parse(res.result.contents[0].text);
+        expect(data).toHaveProperty("entry_count");
+      } finally {
+        proc.kill();
+      }
+    },
+  );
 });
