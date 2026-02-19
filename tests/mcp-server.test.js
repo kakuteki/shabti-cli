@@ -16,9 +16,9 @@ try {
 /**
  * Send a JSON-RPC request to the MCP server and collect the response.
  */
-function sendRequest(proc, request) {
+function sendRequest(proc, request, timeoutMs = 10_000) {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("timeout")), 10_000);
+    const timeout = setTimeout(() => reject(new Error("timeout")), timeoutMs);
     let buf = "";
 
     const onData = (chunk) => {
@@ -410,15 +410,20 @@ describe("MCP server", () => {
       });
 
       // memory_store should return error, not crash
-      const storeRes = await sendRequest(proc, {
-        jsonrpc: "2.0",
-        id: 2,
-        method: "tools/call",
-        params: {
-          name: "memory_store",
-          arguments: { content: "test" },
+      // Engine init with unreachable Qdrant can take 10+ seconds
+      const storeRes = await sendRequest(
+        proc,
+        {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: {
+            name: "memory_store",
+            arguments: { content: "test" },
+          },
         },
-      });
+        20_000,
+      );
       expect(storeRes.error).toBeDefined();
       expect(storeRes.error.code).toBe(-32603);
 
