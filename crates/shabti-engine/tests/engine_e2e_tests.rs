@@ -200,3 +200,55 @@ async fn engine_multiple_entries_ranking() {
     engine.shutdown().await.unwrap();
     engine.cleanup().await.unwrap();
 }
+
+// ============================================================
+// Graceful degradation & error handling
+// ============================================================
+
+#[tokio::test]
+async fn engine_invalid_qdrant_url_returns_error() {
+    let tmp = TempDir::new().unwrap();
+    let config = EngineConfig {
+        qdrant_url: "http://localhost:19999".to_string(), // no server here
+        collection_name: format!("shabti_test_{}", uuid::Uuid::new_v4().simple()),
+        data_dir: tmp.path().to_path_buf(),
+        vector_size: 384,
+    };
+
+    let result = ShabtiEngine::new(config).await;
+    assert!(result.is_err(), "should fail with unreachable Qdrant");
+}
+
+#[tokio::test]
+async fn engine_search_empty_collection() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    // Search on empty collection should return empty vec, not error
+    let results = engine.search_similar("anything", 10, None).await.unwrap();
+    assert!(results.is_empty());
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn engine_search_nonexistent_namespace() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    engine
+        .store("test entry", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    // Search in non-existent namespace should return empty, not error
+    let results = engine
+        .search_similar("test", 10, Some("nonexistent"))
+        .await
+        .unwrap();
+    assert!(results.is_empty());
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}

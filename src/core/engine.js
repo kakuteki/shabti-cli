@@ -14,15 +14,23 @@ const DEFAULT_CONFIG = {
   collection_name: "shabti",
 };
 
+/** Env var overrides (highest priority). */
+function envOverrides() {
+  const o = {};
+  if (process.env.SHABTI_QDRANT_URL) o.qdrant_url = process.env.SHABTI_QDRANT_URL;
+  return o;
+}
+
 export function loadConfig() {
+  let config = DEFAULT_CONFIG;
   if (existsSync(CONFIG_PATH)) {
     try {
-      return { ...DEFAULT_CONFIG, ...JSON.parse(readFileSync(CONFIG_PATH, "utf8")) };
+      config = { ...config, ...JSON.parse(readFileSync(CONFIG_PATH, "utf8")) };
     } catch {
-      return DEFAULT_CONFIG;
+      // keep defaults
     }
   }
-  return DEFAULT_CONFIG;
+  return { ...config, ...envOverrides() };
 }
 
 export function saveConfig(config) {

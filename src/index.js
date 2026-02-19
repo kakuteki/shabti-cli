@@ -67,7 +67,7 @@ function buildProgram() {
   const program = new Command();
   program
     .name("shabti")
-    .description("Demo CLI tool — showcasing npm-publishable CLI structure")
+    .description("Agent Memory OS — semantic memory for AI agents")
     .version(version);
   registerChat(program);
   registerConfig(program);
