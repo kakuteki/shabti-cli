@@ -1,3 +1,4 @@
+pub mod a2a;
 pub mod agent;
 pub mod benchmark;
 pub mod clustering;
@@ -13,12 +14,14 @@ pub mod metrics;
 pub mod namespace;
 pub mod near_dedup;
 pub mod orchestrator;
+pub mod procedural;
 pub mod query;
 pub mod resolution;
 pub mod scoring;
 pub mod sharing;
 pub mod traits;
 pub mod types;
+pub mod wasm_store;
 
 pub use dedup::DedupChecker;
 pub use entry::{MemoryEntry, MemoryEntryBuilder};
