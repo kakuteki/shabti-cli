@@ -14,6 +14,7 @@ describe("help / default output", () => {
 
   it("lists available commands in --help", async () => {
     const { stdout } = await run(["--help"]);
+    expect(stdout).toContain("a2a");
     expect(stdout).toContain("hello");
     expect(stdout).toContain("list");
     expect(stdout).toContain("spin");
