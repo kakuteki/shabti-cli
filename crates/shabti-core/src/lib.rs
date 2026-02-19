@@ -21,6 +21,7 @@ pub mod scoring;
 pub mod sharing;
 pub mod traits;
 pub mod types;
+pub mod wasm_store;
 
 pub use dedup::DedupChecker;
 pub use entry::{MemoryEntry, MemoryEntryBuilder};
