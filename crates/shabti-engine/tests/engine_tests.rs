@@ -122,6 +122,7 @@ async fn store_with_options() {
         origin_type: Some(OriginType::AgentGenerated),
         keywords: Some(vec!["test".to_string()]),
         tags: Some(vec!["tag1".to_string()]),
+        ..Default::default()
     };
 
     let result = engine.store("custom options test", &opts).await.unwrap();

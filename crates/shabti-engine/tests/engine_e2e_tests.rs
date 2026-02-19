@@ -392,6 +392,97 @@ async fn engine_expired_entry_excluded_from_search() {
 }
 
 // ============================================================
+// List entries (for export)
+// ============================================================
+
+#[tokio::test]
+async fn engine_list_entries_returns_all() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    engine
+        .store("Entry one", &StoreOptions::default())
+        .await
+        .unwrap();
+    engine
+        .store("Entry two", &StoreOptions::default())
+        .await
+        .unwrap();
+    engine
+        .store("Entry three", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    let entries = engine.list_entries(None, None).unwrap();
+    assert_eq!(entries.len(), 3);
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn engine_list_entries_with_namespace_filter() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    let opts_work = StoreOptions {
+        namespace: Some("work".to_string()),
+        ..Default::default()
+    };
+    let opts_personal = StoreOptions {
+        namespace: Some("personal".to_string()),
+        ..Default::default()
+    };
+
+    engine.store("Work item A", &opts_work).await.unwrap();
+    engine.store("Work item B", &opts_work).await.unwrap();
+    engine
+        .store("Personal item", &opts_personal)
+        .await
+        .unwrap();
+
+    // Filter by namespace
+    let work_entries = engine.list_entries(Some("work"), None).unwrap();
+    assert_eq!(work_entries.len(), 2);
+    assert!(work_entries.iter().all(|e| e.namespace == "work"));
+
+    let personal_entries = engine.list_entries(Some("personal"), None).unwrap();
+    assert_eq!(personal_entries.len(), 1);
+
+    // No filter returns all
+    let all_entries = engine.list_entries(None, None).unwrap();
+    assert_eq!(all_entries.len(), 3);
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn engine_list_entries_with_limit() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    engine
+        .store("Entry alpha", &StoreOptions::default())
+        .await
+        .unwrap();
+    engine
+        .store("Entry beta", &StoreOptions::default())
+        .await
+        .unwrap();
+    engine
+        .store("Entry gamma", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    let limited = engine.list_entries(None, Some(2)).unwrap();
+    assert_eq!(limited.len(), 2);
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+// ============================================================
 // Garbage Collection
 // ============================================================
 

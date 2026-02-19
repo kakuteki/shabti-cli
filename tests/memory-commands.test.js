@@ -41,6 +41,29 @@ describe("search command", () => {
   });
 });
 
+describe("export command", () => {
+  it("shows help with --help", async () => {
+    const { stdout, code } = await run(["export", "--help"]);
+    expect(code).toBe(0);
+    expect(stdout).toContain("Export memory entries");
+    expect(stdout).toContain("--namespace");
+    expect(stdout).toContain("--no-embeddings");
+    expect(stdout).toContain("--output");
+    expect(stdout).toContain("--limit");
+  });
+});
+
+describe("import command", () => {
+  it("shows help with --help", async () => {
+    const { stdout, code } = await run(["import", "--help"]);
+    expect(code).toBe(0);
+    expect(stdout).toContain("Import memory entries");
+    expect(stdout).toContain("<file>");
+    expect(stdout).toContain("--namespace");
+    expect(stdout).toContain("--dry-run");
+  });
+});
+
 describe("snapshot command", () => {
   it("shows help with --help", async () => {
     const { stdout, code } = await run(["snapshot", "--help"]);
