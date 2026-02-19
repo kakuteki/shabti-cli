@@ -74,6 +74,17 @@ const TOOLS = [
     },
   },
   {
+    name: "memory_export",
+    description: "Export all memory entries as a JSONL array",
+    inputSchema: {
+      type: "object",
+      properties: {
+        namespace: { type: "string", description: "Filter by namespace" },
+        limit: { type: "integer", description: "Maximum entries to export" },
+      },
+    },
+  },
+  {
     name: "memory_gc",
     description: "Garbage collect expired memory entries (removes entries past their TTL)",
     inputSchema: {
@@ -298,6 +309,29 @@ async function handleToolsCall(id, params) {
           {
             type: "text",
             text: JSON.stringify({ entries, count: entries.length }, null, 2),
+          },
+        ],
+      });
+    } catch (err) {
+      return respondError(id, -32603, err.message);
+    }
+  }
+
+  if (name === "memory_export") {
+    if (!eng) {
+      return respondError(id, -32603, "Engine not available");
+    }
+    try {
+      const listOpts = {};
+      if (args?.namespace) listOpts.namespace = args.namespace;
+      if (args?.limit) listOpts.limit = args.limit;
+      const entries = eng.listEntries(listOpts);
+      const lines = entries.map((e) => JSON.stringify(e));
+      return respond(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ entries: entries.length, data: lines.join("\n") }, null, 2),
           },
         ],
       });

@@ -11,6 +11,8 @@ import { registerSearch } from "./commands/search.js";
 import { registerSnapshot } from "./commands/snapshot.js";
 import { registerSpin } from "./commands/spin.js";
 import { registerStatus } from "./commands/status.js";
+import { registerExport } from "./commands/export.js";
+import { registerImport } from "./commands/import.js";
 import { registerStore } from "./commands/store.js";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
@@ -77,6 +79,8 @@ function buildProgram() {
   registerSnapshot(program);
   registerSpin(program);
   registerStatus(program);
+  registerExport(program);
+  registerImport(program);
   registerStore(program);
 
   program

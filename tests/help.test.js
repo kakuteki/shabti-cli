@@ -18,6 +18,8 @@ describe("help / default output", () => {
     expect(stdout).toContain("list");
     expect(stdout).toContain("spin");
     expect(stdout).toContain("store");
+    expect(stdout).toContain("export");
+    expect(stdout).toContain("import");
     expect(stdout).toContain("search");
     expect(stdout).toContain("snapshot");
     expect(stdout).toContain("status");

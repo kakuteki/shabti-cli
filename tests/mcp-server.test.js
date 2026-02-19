@@ -390,6 +390,7 @@ describe("MCP server", () => {
       const names = res.result.tools.map((t) => t.name);
       expect(names).toContain("memory_delete");
       expect(names).toContain("memory_list");
+      expect(names).toContain("memory_export");
       expect(names).toContain("memory_gc");
     } finally {
       proc.kill();
@@ -424,6 +425,55 @@ describe("MCP server", () => {
       const output = JSON.parse(res.result.content[0].text);
       expect(output).toHaveProperty("removed");
       expect(typeof output.removed).toBe("number");
+    } finally {
+      proc.kill();
+    }
+  });
+
+  it.skipIf(!qdrantAvailable)("tools/call memory_export returns entries", async () => {
+    const proc = spawnMcp();
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      // Store something first
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "memory_store",
+          arguments: { content: `Export test ${Date.now()}` },
+        },
+      });
+
+      const res = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: {
+          name: "memory_export",
+          arguments: {},
+        },
+      });
+
+      expect(res.result).toBeDefined();
+      const output = JSON.parse(res.result.content[0].text);
+      expect(output.entries).toBeGreaterThan(0);
+      expect(typeof output.data).toBe("string");
+      // Data should contain JSONL
+      const firstLine = JSON.parse(output.data.split("\n")[0]);
+      expect(firstLine).toHaveProperty("id");
+      expect(firstLine).toHaveProperty("content");
+      expect(firstLine).toHaveProperty("namespace");
     } finally {
       proc.kill();
     }
