@@ -14,6 +14,7 @@ pub mod metrics;
 pub mod namespace;
 pub mod near_dedup;
 pub mod orchestrator;
+pub mod procedural;
 pub mod query;
 pub mod resolution;
 pub mod scoring;
