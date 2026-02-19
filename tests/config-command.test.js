@@ -38,4 +38,15 @@ describe("config command", () => {
     expect(code).not.toBe(0);
     expect(stdout).toContain("Unknown config key");
   });
+
+  it("config setup --check reports connection result", async () => {
+    const { stdout, code } = await run(["config", "setup", "--check"]);
+    // Either succeeds (Qdrant running) or fails gracefully
+    expect(stdout).toContain("Qdrant");
+    if (code === 0) {
+      expect(stdout).toContain("reachable");
+    } else {
+      expect(stdout).toContain("Cannot reach");
+    }
+  });
 });

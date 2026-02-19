@@ -18,6 +18,18 @@ export async function launchRepl() {
 
   const model = "gpt-4o-mini";
 
+  // Try to connect memory engine (non-blocking)
+  let engine = null;
+  try {
+    const { createEngine } = await import("../core/engine.js");
+    engine = createEngine();
+    info(
+      `Memory engine connected (${chalk.cyan("/remember")}, ${chalk.cyan("/recall")} available)`,
+    );
+  } catch {
+    warn("Memory engine not available. Chat-only mode (start Qdrant to enable memory).");
+  }
+
   console.log();
   info(`Interactive mode — model: ${chalk.cyan(model)}`);
   console.log(chalk.dim("  Type a message, or /help for commands. Ctrl+C or /exit to quit.\n"));
@@ -26,7 +38,7 @@ export async function launchRepl() {
     apiKey,
     model,
     promptPrefix: "you> ",
-    onSlashCommand: handleSlashCommand,
+    onSlashCommand: (cmd, args, sess, rl) => handleSlashCommand(cmd, args, sess, rl, engine),
     legacyExitWord: false,
   });
 
