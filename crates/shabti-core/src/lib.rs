@@ -1,4 +1,5 @@
 pub mod agent;
+pub mod benchmark;
 pub mod clustering;
 pub mod contradiction;
 pub mod dedup;
