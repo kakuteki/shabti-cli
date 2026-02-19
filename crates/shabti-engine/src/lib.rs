@@ -604,6 +604,30 @@ impl ShabtiEngine {
         Ok(query_results)
     }
 
+    /// List all entries from the append log, with optional namespace filter and limit.
+    pub fn list_entries(
+        &self,
+        namespace: Option<&str>,
+        limit: Option<usize>,
+    ) -> ShabtiResult<Vec<MemoryEntry>> {
+        let log = self
+            .log
+            .lock()
+            .map_err(|e| ShabtiError::Storage(e.to_string()))?;
+
+        let iter = log.iter();
+
+        let filtered: Vec<MemoryEntry> = match namespace {
+            Some(ns) => iter.filter(|e| e.namespace == ns).collect(),
+            None => iter.collect(),
+        };
+
+        match limit {
+            Some(n) => Ok(filtered.into_iter().take(n).collect()),
+            None => Ok(filtered),
+        }
+    }
+
     /// Garbage collect expired entries. Returns the number of entries removed.
     pub async fn gc(&self) -> ShabtiResult<usize> {
         let now = std::time::SystemTime::now()
