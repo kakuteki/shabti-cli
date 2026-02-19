@@ -48,7 +48,8 @@ export function registerConfig(program) {
   cmd
     .command("setup")
     .description("Show Qdrant setup instructions")
-    .action(() => {
+    .option("--check", "Test connection to Qdrant")
+    .action(async (opts) => {
       const config = loadConfig();
       heading("Qdrant Setup");
       console.log();
@@ -63,5 +64,21 @@ export function registerConfig(program) {
       console.log("  To change the URL:");
       console.log(`    shabti config set qdrant_url ${chalk.dim("<url>")}`);
       console.log();
+
+      if (opts.check) {
+        const restUrl = config.qdrant_url.replace(":6334", ":6333");
+        try {
+          const res = await fetch(`${restUrl}/healthz`);
+          if (res.ok) {
+            success("Qdrant is reachable and healthy.");
+          } else {
+            error(`Qdrant responded with status ${res.status}`);
+            process.exitCode = 1;
+          }
+        } catch (err) {
+          error(`Cannot reach Qdrant at ${restUrl}: ${err.message}`);
+          process.exitCode = 1;
+        }
+      }
     });
 }
