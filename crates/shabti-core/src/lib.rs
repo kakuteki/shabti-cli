@@ -8,6 +8,7 @@ pub mod event;
 pub mod gate;
 pub mod namespace;
 pub mod near_dedup;
+pub mod orchestrator;
 pub mod query;
 pub mod resolution;
 pub mod scoring;
