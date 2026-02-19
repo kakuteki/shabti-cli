@@ -25,6 +25,15 @@ pub enum ShabtiError {
 
     #[error("serialization error: {0}")]
     Serialization(String),
+
+    #[error("protocol error: {0}")]
+    Protocol(String),
+
+    #[error("timeout: {0}")]
+    Timeout(String),
+
+    #[error("configuration error: {0}")]
+    Config(String),
 }
 
 pub type ShabtiResult<T> = Result<T, ShabtiError>;
