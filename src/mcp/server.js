@@ -45,6 +45,31 @@ const TOOLS = [
     },
   },
   {
+    name: "memory_delete",
+    description: "Delete a memory entry by ID",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "UUID of the memory entry to delete" },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "memory_list",
+    description: "List recent memory entries",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "integer",
+          description: "Maximum number of entries to return (default: 10)",
+        },
+        namespace: { type: "string", description: "Filter by namespace" },
+      },
+    },
+  },
+  {
     name: "memory_status",
     description: "Get the current status of the memory engine",
     inputSchema: {
@@ -70,9 +95,12 @@ const RESOURCES = [
 ];
 
 let engine = null;
+let engineInitAttempted = false;
 
 function initEngine() {
   if (engine) return engine;
+  if (engineInitAttempted) return null;
+  engineInitAttempted = true;
   try {
     engine = createEngine();
   } catch {
@@ -205,6 +233,58 @@ async function handleToolsCall(id, params) {
           {
             type: "text",
             text: JSON.stringify({ query, results: formatted }, null, 2),
+          },
+        ],
+      });
+    } catch (err) {
+      return respondError(id, -32603, err.message);
+    }
+  }
+
+  if (name === "memory_delete") {
+    if (!eng) {
+      return respondError(id, -32603, "Engine not available");
+    }
+    const entryId = args?.id;
+    if (!entryId) {
+      return respondError(id, -32602, "Missing required parameter: id");
+    }
+    try {
+      await eng.delete(entryId);
+      return respond(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ deleted: true, id: entryId }, null, 2),
+          },
+        ],
+      });
+    } catch (err) {
+      return respondError(id, -32603, err.message);
+    }
+  }
+
+  if (name === "memory_list") {
+    if (!eng) {
+      return respondError(id, -32603, "Engine not available");
+    }
+    try {
+      const limit = args?.limit || 10;
+      const queryObj = { text: "*", limit };
+      if (args?.namespace) queryObj.namespace = args.namespace;
+      const results = await eng.executeQuery(queryObj);
+      const entries = results.map((r) => ({
+        id: r.id,
+        content: r.content,
+        score: r.score,
+        namespace: r.namespace,
+        createdAt: r.createdAt,
+      }));
+      return respond(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ entries, count: entries.length }, null, 2),
           },
         ],
       });

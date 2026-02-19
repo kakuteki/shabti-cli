@@ -28,4 +28,13 @@ describe("help / default output", () => {
     const { stdout } = await run(["--version"]);
     expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
   });
+
+  it("mcp-config outputs valid JSON with mcpServers", async () => {
+    const { stdout, code } = await run(["mcp-config"]);
+    expect(code).toBe(0);
+    const config = JSON.parse(stdout);
+    expect(config.mcpServers).toBeDefined();
+    expect(config.mcpServers["shabti-memory"].command).toBe("npx");
+    expect(config.mcpServers["shabti-memory"].args).toContain("shabti-mcp");
+  });
 });

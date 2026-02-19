@@ -264,6 +264,31 @@ impl ShabtiEngine {
         Ok(StoreResult::Stored(id))
     }
 
+    pub async fn delete(&self, id: Uuid) -> ShabtiResult<()> {
+        // Delete from Qdrant
+        self.index.delete(id).await?;
+
+        // Remove from graph
+        {
+            let mut graph = self
+                .graph
+                .lock()
+                .map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            graph.remove_node(id);
+        }
+
+        // Decrement count
+        {
+            let mut count = self
+                .entry_count
+                .lock()
+                .map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            *count = count.saturating_sub(1);
+        }
+
+        Ok(())
+    }
+
     pub async fn get(&self, id: Uuid) -> ShabtiResult<MemoryEntry> {
         let log = self
             .log
