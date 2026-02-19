@@ -1,7 +1,7 @@
 {
   "name": "shabti",
   "version": "2.0.0",
-  "description": "Demo CLI tool — showcasing npm-publishable CLI structure",
+  "description": "Agent Memory OS — semantic memory for AI agents",
   "type": "module",
   "main": "native.cjs",
   "types": "native.d.ts",
@@ -12,7 +12,8 @@
     "src/",
     "native.cjs",
     "native.d.ts",
-    "*.node"
+    "*.node",
+    "BENCHMARKS.md"
   ],
   "napi": {
     "binaryName": "shabti",
@@ -34,9 +35,14 @@
     "prepare": "husky"
   },
   "keywords": [
-    "cli",
-    "demo",
-    "tool"
+    "ai",
+    "agent",
+    "memory",
+    "semantic-search",
+    "vector-database",
+    "qdrant",
+    "embeddings",
+    "cli"
   ],
   "author": "Kaga Hinata",
   "engines": {
