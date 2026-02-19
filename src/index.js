@@ -3,6 +3,7 @@
 import { readFileSync } from "fs";
 import chalk from "chalk";
 import { Command } from "commander";
+import { registerA2A } from "./commands/a2a.js";
 import { registerChat } from "./commands/chat.js";
 import { registerConfig } from "./commands/config.js";
 import { registerHello } from "./commands/hello.js";
@@ -71,6 +72,7 @@ function buildProgram() {
     .name("shabti")
     .description("Agent Memory OS — semantic memory for AI agents")
     .version(version);
+  registerA2A(program);
   registerChat(program);
   registerConfig(program);
   registerHello(program);
