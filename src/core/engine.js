@@ -1,6 +1,9 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
+import { createRequire } from "module";
 import { homedir } from "os";
 import { join } from "path";
+
+const require = createRequire(import.meta.url);
 
 const CONFIG_DIR = join(homedir(), ".shabti");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
