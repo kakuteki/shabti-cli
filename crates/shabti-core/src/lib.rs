@@ -6,6 +6,7 @@ pub mod entry;
 pub mod error;
 pub mod event;
 pub mod gate;
+pub mod mcp;
 pub mod namespace;
 pub mod near_dedup;
 pub mod orchestrator;
