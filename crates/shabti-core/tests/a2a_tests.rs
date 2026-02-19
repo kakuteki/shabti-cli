@@ -27,7 +27,7 @@ fn agent_card_to_json() {
     let json = card.to_json();
     assert_eq!(json["name"], "test-agent");
     assert_eq!(json["description"], "A test agent");
-    assert_eq!(json["url"], "https://example.com");
+    assert_eq!(json["endpoint"], "https://example.com");
     assert!(json["capabilities"].is_array());
 }
 
@@ -139,4 +139,16 @@ fn registry_unregister() {
     assert_eq!(registry.agents().len(), 1);
     registry.unregister("temp-agent");
     assert_eq!(registry.agents().len(), 0);
+}
+
+#[test]
+fn registry_register_upsert() {
+    let mut registry = A2ARegistry::new();
+    registry.register(AgentCard::new("agent-a", "Version 1", "https://v1:8080"));
+    registry.register(AgentCard::new("agent-a", "Version 2", "https://v2:8080"));
+
+    assert_eq!(registry.agents().len(), 1);
+    let agent = registry.find("agent-a").unwrap();
+    assert_eq!(agent.description, "Version 2");
+    assert_eq!(agent.endpoint, "https://v2:8080");
 }

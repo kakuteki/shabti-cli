@@ -100,7 +100,11 @@ impl WasmMemoryStore for InMemoryStore {
 }
 
 /// Compute cosine similarity between two vectors.
+///
+/// # Panics
+/// Panics if `a` and `b` have different lengths.
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+    assert_eq!(a.len(), b.len(), "embedding dimension mismatch");
     let dot: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
     let mag_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
     let mag_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();

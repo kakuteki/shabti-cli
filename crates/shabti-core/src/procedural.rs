@@ -85,8 +85,8 @@ impl ProceduralMemory {
         let tool_seq: Vec<&str> = self.records.iter().map(|r| r.tool_name.as_str()).collect();
         let mut patterns = Vec::new();
 
-        // Try window sizes from 2 to half the sequence length
-        let max_window = tool_seq.len() / 2;
+        // Try window sizes from 2 up to len-1 (all meaningful subsequences)
+        let max_window = tool_seq.len().saturating_sub(1);
         for window_size in 2..=max_window {
             let mut seq_counts: HashMap<Vec<&str>, usize> = HashMap::new();
 

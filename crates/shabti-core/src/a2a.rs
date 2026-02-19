@@ -29,7 +29,7 @@ impl AgentCard {
         json!({
             "name": self.name,
             "description": self.description,
-            "url": self.endpoint,
+            "endpoint": self.endpoint,
             "capabilities": self.capabilities,
         })
     }
@@ -99,7 +99,11 @@ impl A2ARegistry {
     }
 
     pub fn register(&mut self, card: AgentCard) {
-        self.agents.push(card);
+        if let Some(existing) = self.agents.iter_mut().find(|a| a.name == card.name) {
+            *existing = card;
+        } else {
+            self.agents.push(card);
+        }
     }
 
     pub fn unregister(&mut self, name: &str) {

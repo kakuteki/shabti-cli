@@ -130,3 +130,12 @@ fn cosine_similarity_correctness() {
     let orthogonal = results.iter().find(|r| r.content == "Orthogonal").unwrap();
     assert!(orthogonal.score.abs() < 0.001);
 }
+
+#[test]
+#[should_panic(expected = "embedding dimension mismatch")]
+fn search_dimension_mismatch_panics() {
+    let mut store = InMemoryStore::new();
+    store.store("entry", &[1.0, 0.0, 0.0], "default");
+    // Query with different dimension should panic
+    let _ = store.search(&[1.0, 0.0], 1, None);
+}
