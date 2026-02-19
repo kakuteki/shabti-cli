@@ -1,0 +1,302 @@
+#!/usr/bin/env node
+import { createInterface } from "readline";
+import { createEngine, loadConfig } from "../core/engine.js";
+
+const SERVER_INFO = {
+  name: "shabti-memory",
+  version: "2.0.0",
+};
+
+const TOOLS = [
+  {
+    name: "memory_store",
+    description: "Store a memory entry in shabti",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content: { type: "string", description: "The text content to store" },
+        namespace: {
+          type: "string",
+          description: "Target namespace (default: 'default')",
+        },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags to associate with the memory",
+        },
+      },
+      required: ["content"],
+    },
+  },
+  {
+    name: "memory_search",
+    description: "Search stored memories by semantic similarity",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search query text" },
+        limit: {
+          type: "integer",
+          description: "Maximum number of results (default: 10)",
+        },
+        namespace: { type: "string", description: "Namespace to search within" },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "memory_status",
+    description: "Get the current status of the memory engine",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+];
+
+const RESOURCES = [
+  {
+    uri: "shabti://status",
+    name: "Engine status",
+    description: "Current shabti engine status and statistics",
+    mimeType: "application/json",
+  },
+  {
+    uri: "shabti://config",
+    name: "Engine configuration",
+    description: "Current engine configuration",
+    mimeType: "application/json",
+  },
+];
+
+let engine = null;
+
+function initEngine() {
+  if (engine) return engine;
+  try {
+    engine = createEngine();
+  } catch {
+    // engine stays null — tools will return errors
+  }
+  return engine;
+}
+
+function respond(id, result) {
+  const msg = JSON.stringify({ jsonrpc: "2.0", id, result });
+  process.stdout.write(msg + "\n");
+}
+
+function respondError(id, code, message) {
+  const msg = JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } });
+  process.stdout.write(msg + "\n");
+}
+
+function handleInitialize(id) {
+  respond(id, {
+    protocolVersion: "2024-11-05",
+    serverInfo: SERVER_INFO,
+    capabilities: {
+      tools: {},
+      resources: {},
+    },
+  });
+}
+
+function handleToolsList(id) {
+  respond(id, { tools: TOOLS });
+}
+
+function handleResourcesList(id) {
+  respond(id, { resources: RESOURCES });
+}
+
+async function handleToolsCall(id, params) {
+  const { name, arguments: args } = params;
+
+  const eng = initEngine();
+
+  if (name === "memory_status") {
+    if (!eng) {
+      return respond(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              { status: "unavailable", entry_count: 0, model_id: "unknown" },
+              null,
+              2,
+            ),
+          },
+        ],
+      });
+    }
+    const status = eng.status();
+    return respond(id, {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              status: "ok",
+              entry_count: status.entryCount,
+              tier: status.tier,
+              model_id: status.modelId,
+              qdrant_url: status.qdrantUrl,
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    });
+  }
+
+  if (name === "memory_store") {
+    if (!eng) {
+      return respondError(id, -32603, "Engine not available");
+    }
+    const content = args?.content;
+    if (!content) {
+      return respondError(id, -32602, "Missing required parameter: content");
+    }
+    try {
+      const opts = {};
+      if (args.namespace) opts.namespace = args.namespace;
+      if (args.tags) opts.tags = args.tags;
+      const result = await eng.store(content, opts);
+      return respond(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              { status: result.status, id: result.id || result.existingId },
+              null,
+              2,
+            ),
+          },
+        ],
+      });
+    } catch (err) {
+      return respondError(id, -32603, err.message);
+    }
+  }
+
+  if (name === "memory_search") {
+    if (!eng) {
+      return respondError(id, -32603, "Engine not available");
+    }
+    const query = args?.query;
+    if (!query) {
+      return respondError(id, -32602, "Missing required parameter: query");
+    }
+    try {
+      const limit = args.limit || 10;
+      const queryObj = { text: query, limit };
+      if (args.namespace) queryObj.namespace = args.namespace;
+      const results = await eng.executeQuery(queryObj);
+      const formatted = results.map((r) => ({
+        content: r.content,
+        score: r.score,
+        id: r.id,
+        namespace: r.namespace,
+      }));
+      return respond(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ query, results: formatted }, null, 2),
+          },
+        ],
+      });
+    } catch (err) {
+      return respondError(id, -32603, err.message);
+    }
+  }
+
+  respondError(id, -32601, `Unknown tool: ${name}`);
+}
+
+function handleResourcesRead(id, params) {
+  const { uri } = params;
+  const eng = initEngine();
+
+  if (uri === "shabti://status") {
+    if (!eng) {
+      return respond(id, {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify({ status: "unavailable", entry_count: 0 }),
+          },
+        ],
+      });
+    }
+    const status = eng.status();
+    return respond(id, {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify({
+            status: "ok",
+            entry_count: status.entryCount,
+            tier: status.tier,
+            model_id: status.modelId,
+          }),
+        },
+      ],
+    });
+  }
+
+  if (uri === "shabti://config") {
+    const config = loadConfig();
+    return respond(id, {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(config),
+        },
+      ],
+    });
+  }
+
+  respondError(id, -32602, `Unknown resource: ${uri}`);
+}
+
+async function handleRequest(line) {
+  let req;
+  try {
+    req = JSON.parse(line);
+  } catch {
+    return respondError(null, -32700, "Parse error");
+  }
+
+  const { id, method, params } = req;
+
+  switch (method) {
+    case "initialize":
+      return handleInitialize(id);
+    case "notifications/initialized":
+      return; // no response needed for notifications
+    case "tools/list":
+      return handleToolsList(id);
+    case "tools/call":
+      return handleToolsCall(id, params || {});
+    case "resources/list":
+      return handleResourcesList(id);
+    case "resources/read":
+      return handleResourcesRead(id, params || {});
+    default:
+      return respondError(id, -32601, "Method not found");
+  }
+}
+
+// stdio transport: read newline-delimited JSON from stdin
+const rl = createInterface({ input: process.stdin, terminal: false });
+rl.on("line", (line) => {
+  const trimmed = line.trim();
+  if (trimmed) handleRequest(trimmed);
+});
+rl.on("close", () => process.exit(0));

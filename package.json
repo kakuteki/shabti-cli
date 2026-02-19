@@ -6,7 +6,8 @@
   "main": "native.cjs",
   "types": "native.d.ts",
   "bin": {
-    "shabti": "src/index.js"
+    "shabti": "src/index.js",
+    "shabti-mcp": "src/mcp/server.js"
   },
   "files": [
     "src/",
@@ -42,6 +43,7 @@
     "vector-database",
     "qdrant",
     "embeddings",
+    "mcp",
     "cli"
   ],
   "author": "Kaga Hinata",
