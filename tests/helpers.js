@@ -9,14 +9,14 @@ const CLI = resolve(__dirname, "..", "src", "index.js");
  * Run the CLI as a subprocess and return { stdout, stderr, code }.
  * FORCE_COLOR=0 disables chalk colouring so assertions use plain text.
  */
-export function run(args = [], envOverrides = {}) {
+export function run(args = [], envOverrides = {}, options = {}) {
   return new Promise((resolve) => {
     execFile(
       "node",
       [CLI, ...args],
       {
         env: { ...process.env, FORCE_COLOR: "0", ...envOverrides },
-        timeout: 10_000,
+        timeout: options.timeout || 10_000,
       },
       (err, stdout, stderr) => {
         resolve({

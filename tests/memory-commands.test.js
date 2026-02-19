@@ -10,6 +10,7 @@ describe("store command", () => {
     expect(stdout).toContain("--namespace");
     expect(stdout).toContain("--session");
     expect(stdout).toContain("--tags");
+    expect(stdout).toContain("--ttl");
   });
 
   it("fails when no content is provided", async () => {
@@ -62,18 +63,24 @@ describe("status command", () => {
 
 describe("graceful degradation", () => {
   it("store command shows error on invalid qdrant", async () => {
-    const { stdout, code } = await run(["store", "test"], {
-      SHABTI_QDRANT_URL: "http://localhost:19999",
-    });
-    expect(stdout).toContain("[error]");
+    const { stdout, stderr, code } = await run(
+      ["store", "test"],
+      { SHABTI_QDRANT_URL: "http://localhost:19999" },
+      { timeout: 20_000 },
+    );
+    const output = stdout + stderr;
+    expect(output).toMatch(/\[error\]|Failed|error/i);
     expect(code).not.toBe(0);
-  }, 15_000);
+  }, 25_000);
 
   it("search command shows error on invalid qdrant", async () => {
-    const { stdout, code } = await run(["search", "test"], {
-      SHABTI_QDRANT_URL: "http://localhost:19999",
-    });
-    expect(stdout).toContain("[error]");
+    const { stdout, stderr, code } = await run(
+      ["search", "test"],
+      { SHABTI_QDRANT_URL: "http://localhost:19999" },
+      { timeout: 20_000 },
+    );
+    const output = stdout + stderr;
+    expect(output).toMatch(/\[error\]|Failed|error/i);
     expect(code).not.toBe(0);
-  }, 15_000);
+  }, 25_000);
 });

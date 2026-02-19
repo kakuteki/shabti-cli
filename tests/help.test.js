@@ -22,6 +22,7 @@ describe("help / default output", () => {
     expect(stdout).toContain("snapshot");
     expect(stdout).toContain("status");
     expect(stdout).toContain("config");
+    expect(stdout).toContain("gc");
   });
 
   it("shows version with --version", async () => {
