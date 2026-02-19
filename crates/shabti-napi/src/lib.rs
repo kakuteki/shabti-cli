@@ -100,6 +100,32 @@ pub struct NapiSnapshot {
 
 #[napi(object)]
 #[derive(Clone)]
+pub struct NapiExportEntry {
+    pub id: String,
+    pub content: String,
+    pub namespace: String,
+    pub tags: Vec<String>,
+    pub keywords: Vec<String>,
+    pub session_id: String,
+    pub created_at: i64,
+    pub expires_at: Option<i64>,
+    pub lifecycle_state: String,
+    pub origin_type: String,
+    pub model_id: String,
+    pub embedding: Option<Vec<f64>>,
+    pub metadata: Option<String>,
+}
+
+#[napi(object)]
+#[derive(Clone, Default)]
+pub struct NapiListOptions {
+    pub namespace: Option<String>,
+    pub limit: Option<u32>,
+    pub include_embeddings: Option<bool>,
+}
+
+#[napi(object)]
+#[derive(Clone)]
 pub struct NapiStatus {
     pub entry_count: u32,
     pub tier: String,
@@ -371,6 +397,47 @@ impl ShabtiNapi {
             data_dir: self.data_dir.to_string_lossy().to_string(),
             model_id: self.engine.current_model_id().to_string(),
         }
+    }
+
+    #[napi]
+    pub fn list_entries(&self, options: Option<NapiListOptions>) -> Result<Vec<NapiExportEntry>> {
+        let opts = options.unwrap_or_default();
+        let include_emb = opts.include_embeddings.unwrap_or(false);
+
+        let entries = self
+            .engine
+            .list_entries(
+                opts.namespace.as_deref(),
+                opts.limit.map(|v| v as usize),
+            )
+            .map_err(|e| Error::from_reason(format!("{e}")))?;
+
+        Ok(entries
+            .into_iter()
+            .map(|e| NapiExportEntry {
+                id: e.id.to_string(),
+                content: e.content,
+                namespace: e.namespace,
+                tags: e.tags,
+                keywords: e.keywords,
+                session_id: e.session_id,
+                created_at: e.created_at,
+                expires_at: e.expires_at,
+                lifecycle_state: format!("{:?}", e.lifecycle_state),
+                origin_type: format!("{:?}", e.origin_type),
+                model_id: e.model_id,
+                embedding: if include_emb {
+                    Some(e.embedding.into_iter().map(|v| v as f64).collect())
+                } else {
+                    None
+                },
+                metadata: if e.metadata.is_empty() {
+                    None
+                } else {
+                    Some(serde_json::to_string(&e.metadata).unwrap_or_default())
+                },
+            })
+            .collect())
     }
 
     #[napi]
