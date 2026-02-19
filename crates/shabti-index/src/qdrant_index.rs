@@ -22,6 +22,7 @@ pub struct SearchOptions {
     pub namespace: Option<String>,
     pub time_range: Option<TimeRange>,
     pub min_score: Option<f32>,
+    pub exclude_expired: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -205,6 +206,35 @@ impl QdrantIndex {
         Ok(())
     }
 
+    pub async fn scroll_expired(&self, now: i64, limit: usize) -> ShabtiResult<Vec<Uuid>> {
+        let mut filter = Filter::default();
+        filter.must.push(Condition::range(
+            "expires_at",
+            Range {
+                lte: Some(now as f64),
+                gt: Some(0.0), // only entries that actually have expires_at set
+                ..Default::default()
+            },
+        ));
+
+        let results = self
+            .client
+            .scroll(
+                ScrollPointsBuilder::new(&self.collection_name)
+                    .filter(filter)
+                    .limit(limit as u32)
+                    .with_payload(false),
+            )
+            .await
+            .map_err(|e| ShabtiError::Index(e.to_string()))?;
+
+        Ok(results
+            .result
+            .into_iter()
+            .filter_map(|point| point_id_to_uuid(&point.id?))
+            .collect())
+    }
+
     pub async fn delete_collection(&self) -> ShabtiResult<()> {
         self.client
             .delete_collection(&self.collection_name)
@@ -240,11 +270,27 @@ fn build_filter(options: &SearchOptions, active_only: bool) -> Filter {
         filter.must.push(Condition::range("created_at", range));
     }
 
+    // Exclude expired entries: must_not have expires_at <= now
+    // Entries without expires_at in payload are unaffected (permanent).
+    if options.exclude_expired {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time before UNIX epoch")
+            .as_secs() as i64;
+        filter.must_not.push(Condition::range(
+            "expires_at",
+            Range {
+                lte: Some(now as f64),
+                ..Default::default()
+            },
+        ));
+    }
+
     filter
 }
 
 fn entry_to_payload(entry: &MemoryEntry) -> Payload {
-    Payload::try_from(json!({
+    let mut payload = json!({
         "content": entry.content,
         "content_hash": entry.content_hash,
         "model_id": entry.model_id,
@@ -257,8 +303,11 @@ fn entry_to_payload(entry: &MemoryEntry) -> Payload {
         "last_accessed": entry.last_accessed,
         "gap_before": entry.gap_before,
         "gap_after": entry.gap_after,
-    }))
-    .unwrap_or_default()
+    });
+    if let Some(expires_at) = entry.expires_at {
+        payload["expires_at"] = json!(expires_at);
+    }
+    Payload::try_from(payload).unwrap_or_default()
 }
 
 fn uuid_to_point_id(id: Uuid) -> qdrant_client::qdrant::PointId {

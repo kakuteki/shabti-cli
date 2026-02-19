@@ -298,3 +298,152 @@ async fn engine_search_nonexistent_namespace() {
     engine.shutdown().await.unwrap();
     engine.cleanup().await.unwrap();
 }
+
+// ============================================================
+// TTL (Time-To-Live)
+// ============================================================
+
+#[tokio::test]
+async fn engine_store_with_ttl() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    // Store with TTL of 3600 seconds (1 hour)
+    let opts = StoreOptions {
+        ttl_seconds: Some(3600),
+        ..Default::default()
+    };
+    let result = engine.store("TTL test entry", &opts).await.unwrap();
+    assert!(matches!(result, shabti_core::dedup::StoreResult::Stored(_)));
+
+    // Should still be searchable (not expired yet)
+    let results = engine.search_similar("TTL test", 10, None).await.unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].entry.content.contains("TTL test"));
+
+    // Verify expires_at is set on the entry
+    assert!(results[0].entry.expires_at.is_some());
+    let expires_at = results[0].entry.expires_at.unwrap();
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    // expires_at should be ~1 hour from now
+    assert!(expires_at > now);
+    assert!(expires_at <= now + 3601);
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn engine_store_without_ttl_has_no_expiry() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    let result = engine
+        .store("Permanent entry", &StoreOptions::default())
+        .await
+        .unwrap();
+    assert!(matches!(result, shabti_core::dedup::StoreResult::Stored(_)));
+
+    let results = engine
+        .search_similar("Permanent", 10, None)
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].entry.expires_at.is_none());
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn engine_expired_entry_excluded_from_search() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    // Store with TTL of 1 second (will expire almost immediately)
+    let opts = StoreOptions {
+        ttl_seconds: Some(1),
+        ..Default::default()
+    };
+    engine.store("Expiring soon entry", &opts).await.unwrap();
+
+    // Also store a permanent entry
+    engine
+        .store("Permanent entry for TTL test", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    // Wait for TTL to expire
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+
+    // Search should only return the permanent entry
+    let results = engine
+        .search_similar("entry", 10, None)
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].entry.content.contains("Permanent"));
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+// ============================================================
+// Garbage Collection
+// ============================================================
+
+#[tokio::test]
+async fn engine_gc_removes_expired_entries() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    // Store one expiring and one permanent entry
+    let opts = StoreOptions {
+        ttl_seconds: Some(1),
+        ..Default::default()
+    };
+    engine.store("GC test expiring", &opts).await.unwrap();
+    engine
+        .store("GC test permanent", &StoreOptions::default())
+        .await
+        .unwrap();
+    assert_eq!(engine.entry_count(), 2);
+
+    // Wait for TTL to expire
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+
+    // GC should remove the expired entry
+    let removed = engine.gc().await.unwrap();
+    assert_eq!(removed, 1);
+    assert_eq!(engine.entry_count(), 1);
+
+    // Second GC should find nothing to remove
+    let removed = engine.gc().await.unwrap();
+    assert_eq!(removed, 0);
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}
+
+#[tokio::test]
+async fn engine_gc_no_expired_entries() {
+    let tmp = TempDir::new().unwrap();
+    let engine = ShabtiEngine::new(test_config(&tmp)).await.unwrap();
+
+    // Store entries without TTL
+    engine
+        .store("No TTL entry", &StoreOptions::default())
+        .await
+        .unwrap();
+
+    // GC on permanent entries should remove nothing
+    let removed = engine.gc().await.unwrap();
+    assert_eq!(removed, 0);
+    assert_eq!(engine.entry_count(), 1);
+
+    engine.shutdown().await.unwrap();
+    engine.cleanup().await.unwrap();
+}

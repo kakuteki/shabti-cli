@@ -80,6 +80,23 @@ function buildProgram() {
   registerStore(program);
 
   program
+    .command("gc")
+    .description("Garbage collect expired memory entries")
+    .action(async () => {
+      const { createEngine } = await import("./core/engine.js");
+      const { success, error: showError } = await import("./utils/style.js");
+      try {
+        const engine = createEngine();
+        const removed = await engine.gc();
+        success(`GC complete: ${removed} expired entries removed`);
+        await engine.shutdown();
+      } catch (err) {
+        showError(err.message);
+        process.exitCode = 1;
+      }
+    });
+
+  program
     .command("mcp-config")
     .description("Print MCP server configuration JSON for Claude Code / Cursor")
     .action(() => {

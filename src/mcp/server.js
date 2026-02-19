@@ -24,6 +24,10 @@ const TOOLS = [
           items: { type: "string" },
           description: "Tags to associate with the memory",
         },
+        ttl: {
+          type: "integer",
+          description: "Time-to-live in seconds (entry auto-expires after this duration)",
+        },
       },
       required: ["content"],
     },
@@ -67,6 +71,14 @@ const TOOLS = [
         },
         namespace: { type: "string", description: "Filter by namespace" },
       },
+    },
+  },
+  {
+    name: "memory_gc",
+    description: "Garbage collect expired memory entries (removes entries past their TTL)",
+    inputSchema: {
+      type: "object",
+      properties: {},
     },
   },
   {
@@ -191,6 +203,7 @@ async function handleToolsCall(id, params) {
       const opts = {};
       if (args.namespace) opts.namespace = args.namespace;
       if (args.tags) opts.tags = args.tags;
+      if (args.ttl) opts.ttlSeconds = args.ttl;
       const result = await eng.store(content, opts);
       return respond(id, {
         content: [
@@ -285,6 +298,25 @@ async function handleToolsCall(id, params) {
           {
             type: "text",
             text: JSON.stringify({ entries, count: entries.length }, null, 2),
+          },
+        ],
+      });
+    } catch (err) {
+      return respondError(id, -32603, err.message);
+    }
+  }
+
+  if (name === "memory_gc") {
+    if (!eng) {
+      return respondError(id, -32603, "Engine not available");
+    }
+    try {
+      const removed = await eng.gc();
+      return respond(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ removed }, null, 2),
           },
         ],
       });
