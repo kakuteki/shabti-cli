@@ -31,6 +31,7 @@ pub struct StoreOptions {
     pub origin_type: Option<OriginType>,
     pub keywords: Option<Vec<String>>,
     pub tags: Option<Vec<String>>,
+    pub ttl_seconds: Option<u64>,
 }
 
 #[derive(Debug, Clone)]
@@ -222,6 +223,13 @@ impl ShabtiEngine {
         if let Some(ref tags) = options.tags {
             builder = builder.tags(tags.clone());
         }
+        if let Some(ttl) = options.ttl_seconds {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("system time before UNIX epoch")
+                .as_secs() as i64;
+            builder = builder.expires_at(now + ttl as i64);
+        }
 
         let entry = builder.build();
         let id = entry.id;
@@ -307,6 +315,7 @@ impl ShabtiEngine {
 
         let opts = SearchOptions {
             namespace: namespace.map(|s| s.to_string()),
+            exclude_expired: true,
             ..Default::default()
         };
 
@@ -499,6 +508,7 @@ impl ShabtiEngine {
             } else {
                 None
             },
+            exclude_expired: true,
             ..Default::default()
         };
 
@@ -592,6 +602,40 @@ impl ShabtiEngine {
         query_results.truncate(query.limit);
 
         Ok(query_results)
+    }
+
+    /// Garbage collect expired entries. Returns the number of entries removed.
+    pub async fn gc(&self) -> ShabtiResult<usize> {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time before UNIX epoch")
+            .as_secs() as i64;
+
+        let expired_ids = self.index.scroll_expired(now, 1000).await?;
+        let removed = expired_ids.len();
+
+        for id in &expired_ids {
+            self.index.delete(*id).await?;
+            // Remove from graph
+            {
+                let mut graph = self
+                    .graph
+                    .lock()
+                    .map_err(|e| ShabtiError::Storage(e.to_string()))?;
+                graph.remove_node(*id);
+            }
+        }
+
+        // Decrement count
+        if removed > 0 {
+            let mut count = self
+                .entry_count
+                .lock()
+                .map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            *count = count.saturating_sub(removed);
+        }
+
+        Ok(removed)
     }
 
     /// Gracefully shut down the background indexer.

@@ -45,6 +45,7 @@ describe("slash commands", () => {
     expect(output).toContain("/exit");
     expect(output).toContain("/remember");
     expect(output).toContain("/recall");
+    expect(output).toContain("/gc");
   });
 
   it("/remember stores content via engine", async () => {

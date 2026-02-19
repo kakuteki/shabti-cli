@@ -390,6 +390,73 @@ describe("MCP server", () => {
       const names = res.result.tools.map((t) => t.name);
       expect(names).toContain("memory_delete");
       expect(names).toContain("memory_list");
+      expect(names).toContain("memory_gc");
+    } finally {
+      proc.kill();
+    }
+  });
+
+  it.skipIf(!qdrantAvailable)("tools/call memory_gc removes expired entries", async () => {
+    const proc = spawnMcp();
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      const res = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "memory_gc",
+          arguments: {},
+        },
+      });
+
+      expect(res.result).toBeDefined();
+      const output = JSON.parse(res.result.content[0].text);
+      expect(output).toHaveProperty("removed");
+      expect(typeof output.removed).toBe("number");
+    } finally {
+      proc.kill();
+    }
+  });
+
+  it.skipIf(!qdrantAvailable)("tools/call memory_store with ttl sets expiry", async () => {
+    const proc = spawnMcp();
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      const res = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "memory_store",
+          arguments: { content: `TTL test ${Date.now()}`, ttl: 3600 },
+        },
+      });
+
+      expect(res.result).toBeDefined();
+      const output = JSON.parse(res.result.content[0].text);
+      expect(output.status).toBe("stored");
+      expect(output.id).toBeDefined();
     } finally {
       proc.kill();
     }

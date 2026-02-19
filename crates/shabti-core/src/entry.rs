@@ -29,6 +29,8 @@ pub struct MemoryEntry {
     pub origin_type: OriginType,
     pub namespace: String,
     pub metadata: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub expires_at: Option<i64>,
 }
 
 impl MemoryEntry {
@@ -60,6 +62,7 @@ impl MemoryEntry {
             origin_type: OriginType::UserInput,
             namespace: "default".to_string(),
             metadata: HashMap::new(),
+            expires_at: None,
         }
     }
 
@@ -91,6 +94,7 @@ pub struct MemoryEntryBuilder {
     gap_before: Option<f64>,
     gap_after: Option<f64>,
     metadata: Option<HashMap<String, serde_json::Value>>,
+    expires_at: Option<i64>,
 }
 
 impl MemoryEntryBuilder {
@@ -107,6 +111,7 @@ impl MemoryEntryBuilder {
             gap_before: None,
             gap_after: None,
             metadata: None,
+            expires_at: None,
         }
     }
 
@@ -150,6 +155,11 @@ impl MemoryEntryBuilder {
         self
     }
 
+    pub fn expires_at(mut self, ts: i64) -> Self {
+        self.expires_at = Some(ts);
+        self
+    }
+
     pub fn build(self) -> MemoryEntry {
         let mut entry = MemoryEntry::new(self.content, self.embedding, self.model_id);
 
@@ -176,6 +186,9 @@ impl MemoryEntryBuilder {
         }
         if let Some(v) = self.metadata {
             entry.metadata = v;
+        }
+        if let Some(v) = self.expires_at {
+            entry.expires_at = Some(v);
         }
 
         entry

@@ -10,6 +10,7 @@ describe("store command", () => {
     expect(stdout).toContain("--namespace");
     expect(stdout).toContain("--session");
     expect(stdout).toContain("--tags");
+    expect(stdout).toContain("--ttl");
   });
 
   it("fails when no content is provided", async () => {
