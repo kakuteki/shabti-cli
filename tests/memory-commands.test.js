@@ -59,3 +59,21 @@ describe("status command", () => {
     expect(stdout).toContain("--json");
   });
 });
+
+describe("graceful degradation", () => {
+  it("store command shows error on invalid qdrant", async () => {
+    const { stdout, code } = await run(["store", "test"], {
+      SHABTI_QDRANT_URL: "http://localhost:19999",
+    });
+    expect(stdout).toContain("[error]");
+    expect(code).not.toBe(0);
+  }, 15_000);
+
+  it("search command shows error on invalid qdrant", async () => {
+    const { stdout, code } = await run(["search", "test"], {
+      SHABTI_QDRANT_URL: "http://localhost:19999",
+    });
+    expect(stdout).toContain("[error]");
+    expect(code).not.toBe(0);
+  }, 15_000);
+});

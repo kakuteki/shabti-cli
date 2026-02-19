@@ -1,4 +1,4 @@
-use shabti_core::query::{Query, QueryBuilder, SearchExplanation};
+use shabti_core::query::{QueryBuilder, SearchExplanation};
 
 // ============================================================
 // QueryBuilder

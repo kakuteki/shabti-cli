@@ -18,7 +18,7 @@ const STATUS_COLOR = {
 export function registerList(program) {
   program
     .command("list")
-    .description("Show sample task list")
+    .description("Show sample task list (demo)")
     .option("-j, --json", "Output as JSON")
     .option("-f, --filter <status>", "Filter by status")
     .action((opts) => {

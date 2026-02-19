@@ -1,4 +1,3 @@
-use shabti_core::dedup::StoreResult;
 use shabti_core::query::QueryBuilder;
 use shabti_engine::{EngineConfig, ShabtiEngine, StoreOptions};
 use tempfile::TempDir;
