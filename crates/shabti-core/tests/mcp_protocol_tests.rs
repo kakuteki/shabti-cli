@@ -1,6 +1,6 @@
 use serde_json::json;
-use shabti_core::mcp::{McpResource, McpServer, McpTool, ToolParam};
 use shabti_core::mcp::protocol::{McpRequest, McpResponse, McpRouter};
+use shabti_core::mcp::{McpResource, McpServer, McpTool, ToolParam};
 
 // --- 6-1b: MCP JSON-RPC protocol ---
 

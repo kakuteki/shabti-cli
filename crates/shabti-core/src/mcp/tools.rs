@@ -1,4 +1,4 @@
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use super::{McpResource, McpServer, McpTool, ToolParam};
 
@@ -29,7 +29,11 @@ pub fn build_shabti_server() -> McpServer {
         "Store a memory entry in shabti",
         vec![
             ToolParam::required("content", "string", "The text content to store"),
-            ToolParam::optional("namespace", "string", "Target namespace (default: 'default')"),
+            ToolParam::optional(
+                "namespace",
+                "string",
+                "Target namespace (default: 'default')",
+            ),
             ToolParam::optional("tags", "array", "Tags to associate with the memory"),
         ],
     ));
@@ -39,7 +43,11 @@ pub fn build_shabti_server() -> McpServer {
         "Search stored memories by semantic similarity",
         vec![
             ToolParam::required("query", "string", "Search query text"),
-            ToolParam::optional("limit", "integer", "Maximum number of results (default: 10)"),
+            ToolParam::optional(
+                "limit",
+                "integer",
+                "Maximum number of results (default: 10)",
+            ),
             ToolParam::optional("namespace", "string", "Namespace to search within"),
         ],
     ));
@@ -106,10 +114,7 @@ fn handle_memory_search(args: &Value) -> Result<ToolCallResult, String> {
         .and_then(|v| v.as_str())
         .ok_or_else(|| "missing required parameter: query".to_string())?;
 
-    let limit = args
-        .get("limit")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(10);
+    let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(10);
 
     let namespace = args.get("namespace").and_then(|v| v.as_str());
 

@@ -1,6 +1,4 @@
-use shabti_core::benchmark::{
-    BenchmarkResult, BenchmarkRunner, BenchmarkScenario, MemoryContext,
-};
+use shabti_core::benchmark::{BenchmarkResult, BenchmarkRunner, BenchmarkScenario, MemoryContext};
 
 // --- 6-6: LLM task improvement benchmark framework ---
 

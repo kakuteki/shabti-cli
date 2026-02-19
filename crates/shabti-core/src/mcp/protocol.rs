@@ -1,4 +1,4 @@
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use super::McpServer;
 
@@ -112,7 +112,12 @@ impl McpRouter {
     }
 
     fn handle_resources_list(&self, req: &McpRequest) -> McpResponse {
-        let resources: Vec<Value> = self.server.resources().iter().map(|r| r.to_json()).collect();
+        let resources: Vec<Value> = self
+            .server
+            .resources()
+            .iter()
+            .map(|r| r.to_json())
+            .collect();
         McpResponse::success(req.id.clone(), json!({ "resources": resources }))
     }
 }

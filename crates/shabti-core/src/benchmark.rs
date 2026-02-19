@@ -1,4 +1,4 @@
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// A memory context entry with relevance score.
 #[derive(Debug, Clone)]

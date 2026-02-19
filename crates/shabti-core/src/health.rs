@@ -1,6 +1,6 @@
 use std::fmt;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HealthStatus {

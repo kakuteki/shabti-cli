@@ -1,7 +1,7 @@
 pub mod protocol;
 pub mod tools;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// A parameter definition for an MCP tool.
 #[derive(Debug, Clone)]

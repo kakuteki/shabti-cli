@@ -1,5 +1,5 @@
 use serde_json::json;
-use shabti_core::mcp::tools::{build_shabti_server, handle_tool_call, ToolCallResult};
+use shabti_core::mcp::tools::{ToolCallResult, build_shabti_server, handle_tool_call};
 
 // --- 6-1c: MCP shabti tool implementations ---
 

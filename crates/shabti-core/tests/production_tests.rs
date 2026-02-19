@@ -37,7 +37,10 @@ fn health_check_all_healthy() {
 fn health_check_degraded_when_one_unhealthy() {
     let check = HealthCheck::new()
         .component("storage", ComponentStatus::Healthy)
-        .component("index", ComponentStatus::Unhealthy("connection refused".into()))
+        .component(
+            "index",
+            ComponentStatus::Unhealthy("connection refused".into()),
+        )
         .component("embedding", ComponentStatus::Healthy);
 
     assert_eq!(check.status(), HealthStatus::Degraded);
