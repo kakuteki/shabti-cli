@@ -17,6 +17,11 @@ describe("help / default output", () => {
     expect(stdout).toContain("hello");
     expect(stdout).toContain("list");
     expect(stdout).toContain("spin");
+    expect(stdout).toContain("store");
+    expect(stdout).toContain("search");
+    expect(stdout).toContain("snapshot");
+    expect(stdout).toContain("status");
+    expect(stdout).toContain("config");
   });
 
   it("shows version with --version", async () => {

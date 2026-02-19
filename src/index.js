@@ -4,9 +4,14 @@ import { readFileSync } from "fs";
 import chalk from "chalk";
 import { Command } from "commander";
 import { registerChat } from "./commands/chat.js";
+import { registerConfig } from "./commands/config.js";
 import { registerHello } from "./commands/hello.js";
 import { registerList } from "./commands/list.js";
+import { registerSearch } from "./commands/search.js";
+import { registerSnapshot } from "./commands/snapshot.js";
 import { registerSpin } from "./commands/spin.js";
+import { registerStatus } from "./commands/status.js";
+import { registerStore } from "./commands/store.js";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -65,9 +70,14 @@ function buildProgram() {
     .description("Demo CLI tool — showcasing npm-publishable CLI structure")
     .version(version);
   registerChat(program);
+  registerConfig(program);
   registerHello(program);
   registerList(program);
+  registerSearch(program);
+  registerSnapshot(program);
   registerSpin(program);
+  registerStatus(program);
+  registerStore(program);
   return program;
 }
 

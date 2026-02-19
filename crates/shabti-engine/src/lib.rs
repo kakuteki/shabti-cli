@@ -418,6 +418,10 @@ impl ShabtiEngine {
         Ok(results)
     }
 
+    pub fn current_model_id(&self) -> &str {
+        self.embedding.model_id()
+    }
+
     pub fn entry_count(&self) -> usize {
         *self.entry_count.lock().unwrap_or_else(|e| e.into_inner())
     }

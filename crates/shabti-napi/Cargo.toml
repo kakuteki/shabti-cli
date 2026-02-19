@@ -5,5 +5,18 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
-# Phase 4: napi dependencies will be added here
+shabti-core = { path = "../shabti-core" }
+shabti-engine = { path = "../shabti-engine" }
+shabti-storage = { path = "../shabti-storage" }
+napi = { workspace = true }
+napi-derive = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }
+serde_json = { workspace = true }
+
+[build-dependencies]
+napi-build = "2"
