@@ -1,4 +1,4 @@
-use shabti_core::agent::{Agent, AgentRole, AgentRegistry};
+use shabti_core::agent::{Agent, AgentRegistry, AgentRole};
 use shabti_core::types::Scope;
 
 #[test]
@@ -23,7 +23,11 @@ fn create_agent_with_builder() {
     assert_eq!(agent.role, AgentRole::Planner);
     assert_eq!(agent.memory_scope, Scope::Shared);
     assert_eq!(agent.specializations.len(), 2);
-    assert!(agent.specializations.contains(&"task-decomposition".to_string()));
+    assert!(
+        agent
+            .specializations
+            .contains(&"task-decomposition".to_string())
+    );
 }
 
 #[test]

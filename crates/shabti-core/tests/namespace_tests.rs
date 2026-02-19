@@ -1,5 +1,5 @@
 use shabti_core::agent::{Agent, AgentRole};
-use shabti_core::namespace::{NamespacePolicy, AccessDecision};
+use shabti_core::namespace::{AccessDecision, NamespacePolicy};
 use shabti_core::types::Scope;
 
 #[test]

@@ -123,10 +123,7 @@ impl Orchestrator {
     }
 
     pub fn tasks_by_status(&self, status: TaskStatus) -> Vec<&Task> {
-        self.tasks
-            .values()
-            .filter(|t| t.status == status)
-            .collect()
+        self.tasks.values().filter(|t| t.status == status).collect()
     }
 
     pub fn tasks_for_agent(&self, agent_id: Uuid) -> Vec<&Task> {

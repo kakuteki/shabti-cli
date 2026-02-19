@@ -32,10 +32,10 @@ impl NamespacePolicy {
                     return AccessDecision::Allowed;
                 }
                 // Check explicit grants
-                if let Some(granted) = self.grants.get(&agent.id) {
-                    if granted.contains(namespace) {
-                        return AccessDecision::Allowed;
-                    }
+                if let Some(granted) = self.grants.get(&agent.id)
+                    && granted.contains(namespace)
+                {
+                    return AccessDecision::Allowed;
                 }
                 AccessDecision::Denied
             }

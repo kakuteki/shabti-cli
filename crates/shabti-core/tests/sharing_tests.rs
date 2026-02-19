@@ -104,12 +104,16 @@ fn cannot_respond_twice() {
     let request_id = protocol.request_share(alice.id, bob.id, "agent:alice", "data");
 
     // First response succeeds
-    assert!(protocol
-        .respond(request_id, ShareResponse::Accepted, &mut policy)
-        .is_ok());
+    assert!(
+        protocol
+            .respond(request_id, ShareResponse::Accepted, &mut policy)
+            .is_ok()
+    );
 
     // Second response fails
-    assert!(protocol
-        .respond(request_id, ShareResponse::Accepted, &mut policy)
-        .is_err());
+    assert!(
+        protocol
+            .respond(request_id, ShareResponse::Accepted, &mut policy)
+            .is_err()
+    );
 }

@@ -1,5 +1,5 @@
 use shabti_core::agent::{Agent, AgentRegistry, AgentRole};
-use shabti_core::orchestrator::{Orchestrator, Task, TaskStatus, TaskResult};
+use shabti_core::orchestrator::{Orchestrator, Task, TaskResult, TaskStatus};
 
 #[test]
 fn create_task() {
@@ -45,7 +45,11 @@ fn orchestrator_routes_to_best_match() {
     registry.register(py_dev);
 
     let mut orch = Orchestrator::new(registry);
-    let task_id = orch.submit("Optimize loop", "Improve performance", &["rust", "performance"]);
+    let task_id = orch.submit(
+        "Optimize loop",
+        "Improve performance",
+        &["rust", "performance"],
+    );
 
     let task = orch.get_task(task_id).unwrap();
     assert_eq!(task.assigned_to, Some(rust_id));

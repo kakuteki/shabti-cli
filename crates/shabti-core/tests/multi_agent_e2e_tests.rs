@@ -65,9 +65,21 @@ fn e2e_research_team_collaboration() {
     let mut orch = Orchestrator::new(registry);
 
     // Planner submits research and implementation tasks
-    let t1 = orch.submit("Review papers", "Find relevant papers", &["literature-review"]);
-    let t2 = orch.submit("Implement algorithm", "Code the solution", &["implementation", "rust"]);
-    let t3 = orch.submit("Decompose project", "Break into subtasks", &["task-decomposition"]);
+    let t1 = orch.submit(
+        "Review papers",
+        "Find relevant papers",
+        &["literature-review"],
+    );
+    let t2 = orch.submit(
+        "Implement algorithm",
+        "Code the solution",
+        &["implementation", "rust"],
+    );
+    let t3 = orch.submit(
+        "Decompose project",
+        "Break into subtasks",
+        &["task-decomposition"],
+    );
 
     // Verify routing
     assert_eq!(orch.get_task(t1).unwrap().assigned_to, Some(researcher_id));
@@ -190,7 +202,10 @@ fn e2e_task_failure_and_reassignment() {
     let mut orch = Orchestrator::new(registry);
 
     let task_id = orch.submit("Analyze data", "Process dataset", &["analysis"]);
-    assert_eq!(orch.get_task(task_id).unwrap().assigned_to, Some(primary_id));
+    assert_eq!(
+        orch.get_task(task_id).unwrap().assigned_to,
+        Some(primary_id)
+    );
 
     // Task fails
     orch.complete_task(task_id, TaskResult::failure("Dataset corrupted"))
@@ -198,8 +213,15 @@ fn e2e_task_failure_and_reassignment() {
     assert_eq!(orch.get_task(task_id).unwrap().status, TaskStatus::Failed);
 
     // Resubmit with adjusted parameters
-    let retry_id = orch.submit("Analyze data (retry)", "Re-process with cleanup", &["analysis"]);
-    assert_eq!(orch.get_task(retry_id).unwrap().status, TaskStatus::Assigned);
+    let retry_id = orch.submit(
+        "Analyze data (retry)",
+        "Re-process with cleanup",
+        &["analysis"],
+    );
+    assert_eq!(
+        orch.get_task(retry_id).unwrap().status,
+        TaskStatus::Assigned
+    );
     assert_eq!(
         orch.get_task(retry_id).unwrap().assigned_to,
         Some(primary_id)
