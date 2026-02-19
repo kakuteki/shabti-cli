@@ -9,6 +9,7 @@ const COMMANDS = {
   "/history": "Show conversation history",
   "/remember": "Store a memory (e.g. /remember Tokyo is the capital of Japan)",
   "/recall": "Search memories (e.g. /recall capital of Japan)",
+  "/gc": "Garbage collect expired memory entries",
 };
 
 /**
@@ -75,6 +76,9 @@ export function handleSlashCommand(cmd, args, session, rl, engine = null) {
     case "/recall":
       return handleRecall(args, engine);
 
+    case "/gc":
+      return handleGc(engine);
+
     default:
       return false;
   }
@@ -132,6 +136,23 @@ async function handleRecall(query, engine) {
     }
   } catch (err) {
     error(`Failed to search: ${err.message}`);
+  }
+  console.log();
+  return true;
+}
+
+async function handleGc(engine) {
+  if (!engine) {
+    console.log();
+    warn("Memory engine not available. Start Qdrant to enable memory features.");
+    console.log();
+    return true;
+  }
+  try {
+    const removed = await engine.gc();
+    success(`GC complete: ${removed} expired entries removed`);
+  } catch (err) {
+    error(`Failed to run GC: ${err.message}`);
   }
   console.log();
   return true;

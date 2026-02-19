@@ -9,6 +9,7 @@ export function registerStore(program) {
     .option("-n, --namespace <ns>", "Namespace for the entry")
     .option("-s, --session <id>", "Session ID")
     .option("-t, --tags <tags>", "Comma-separated tags")
+    .option("--ttl <seconds>", "Time-to-live in seconds (auto-expires after this duration)")
     .action(async (content, opts) => {
       try {
         const engine = createEngine();
@@ -16,6 +17,7 @@ export function registerStore(program) {
         if (opts.namespace) options.namespace = opts.namespace;
         if (opts.session) options.sessionId = opts.session;
         if (opts.tags) options.tags = opts.tags.split(",").map((t) => t.trim());
+        if (opts.ttl) options.ttlSeconds = parseInt(opts.ttl, 10);
 
         // Model versioning check
         const currentModelId = engine.modelId();

@@ -29,6 +29,7 @@ pub struct NapiStoreOptions {
     pub namespace: Option<String>,
     pub session_id: Option<String>,
     pub tags: Option<Vec<String>>,
+    pub ttl_seconds: Option<u32>,
 }
 
 #[napi(object)]
@@ -47,6 +48,7 @@ pub struct NapiSearchResult {
     pub score: f64,
     pub namespace: String,
     pub created_at: i64,
+    pub expires_at: Option<i64>,
 }
 
 #[napi(object)]
@@ -70,6 +72,7 @@ pub struct NapiQueryResult {
     pub score: f64,
     pub namespace: String,
     pub created_at: i64,
+    pub expires_at: Option<i64>,
     pub explanation: Option<NapiExplanation>,
 }
 
@@ -164,6 +167,7 @@ impl ShabtiNapi {
             namespace: opts.namespace,
             session_id: opts.session_id,
             tags: opts.tags,
+            ttl_seconds: opts.ttl_seconds.map(|v| v as u64),
             ..Default::default()
         };
 
@@ -205,6 +209,7 @@ impl ShabtiNapi {
                 score: r.score as f64,
                 namespace: r.entry.namespace,
                 created_at: r.entry.created_at,
+                expires_at: r.entry.expires_at,
             })
             .collect())
     }
@@ -266,6 +271,7 @@ impl ShabtiNapi {
                     score: r.score as f64,
                     namespace: r.entry.namespace,
                     created_at: r.entry.created_at,
+                    expires_at: r.entry.expires_at,
                     explanation,
                 }
             })
@@ -289,6 +295,7 @@ impl ShabtiNapi {
             score: 1.0,
             namespace: entry.namespace,
             created_at: entry.created_at,
+            expires_at: entry.expires_at,
         })
     }
 
@@ -364,6 +371,16 @@ impl ShabtiNapi {
             data_dir: self.data_dir.to_string_lossy().to_string(),
             model_id: self.engine.current_model_id().to_string(),
         }
+    }
+
+    #[napi]
+    pub async fn gc(&self) -> Result<u32> {
+        let engine = Arc::clone(&self.engine);
+        let removed = engine
+            .gc()
+            .await
+            .map_err(|e| Error::from_reason(format!("{e}")))?;
+        Ok(removed as u32)
     }
 
     #[napi]
