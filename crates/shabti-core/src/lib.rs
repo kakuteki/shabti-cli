@@ -1,4 +1,5 @@
 pub mod agent;
+pub mod benchmark;
 pub mod clustering;
 pub mod contradiction;
 pub mod dedup;
@@ -6,6 +7,9 @@ pub mod entry;
 pub mod error;
 pub mod event;
 pub mod gate;
+pub mod health;
+pub mod mcp;
+pub mod metrics;
 pub mod namespace;
 pub mod near_dedup;
 pub mod orchestrator;
