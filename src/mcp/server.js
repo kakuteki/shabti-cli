@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { createInterface } from "readline";
 import { createEngine, loadConfig } from "../core/engine.js";
+import { createEngineWithRetry } from "../core/retry.js";
+import { logger } from "../utils/logger.js";
 
 const SERVER_INFO = {
   name: "shabti-memory",
@@ -123,11 +125,22 @@ let engineInitAttempted = false;
 function initEngine() {
   if (engine) return engine;
   if (engineInitAttempted) return null;
+  // Synchronous fallback for initial attempt
   engineInitAttempted = true;
   try {
     engine = createEngine();
-  } catch {
-    // engine stays null — tools will return errors
+    logger.info("Engine initialized");
+  } catch (err) {
+    logger.warn("Engine not available, starting background retry", { error: err.message });
+    // Start async retry in background
+    createEngineWithRetry(createEngine)
+      .then((eng) => {
+        engine = eng;
+        logger.info("Engine connected via retry");
+      })
+      .catch(() => {
+        logger.error("Engine retry exhausted — tools will return errors");
+      });
   }
   return engine;
 }
@@ -445,4 +458,20 @@ rl.on("line", (line) => {
   const trimmed = line.trim();
   if (trimmed) handleRequest(trimmed);
 });
-rl.on("close", () => process.exit(0));
+
+async function shutdown() {
+  logger.info("MCP server shutting down");
+  rl.close();
+  if (engine && engine.shutdown) {
+    try {
+      await engine.shutdown();
+    } catch {
+      // best-effort
+    }
+  }
+  process.exit(0);
+}
+
+rl.on("close", shutdown);
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
