@@ -1,6 +1,7 @@
 import { writeFileSync } from "fs";
 import { createEngine } from "../core/engine.js";
 import { success, error } from "../utils/style.js";
+import { parsePositiveInt } from "../utils/validate.js";
 
 export function registerExport(program) {
   program
@@ -15,7 +16,7 @@ export function registerExport(program) {
         const engine = createEngine();
         const listOpts = {};
         if (opts.namespace) listOpts.namespace = opts.namespace;
-        if (opts.limit) listOpts.limit = parseInt(opts.limit, 10);
+        if (opts.limit) listOpts.limit = parsePositiveInt(opts.limit, "--limit");
         listOpts.includeEmbeddings = opts.embeddings !== false ? false : false;
         // --no-embeddings sets opts.embeddings = false (commander negatable)
         // default: exclude embeddings for smaller output

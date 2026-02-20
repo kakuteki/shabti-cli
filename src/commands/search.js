@@ -2,6 +2,7 @@ import chalk from "chalk";
 import Table from "cli-table3";
 import { createEngine } from "../core/engine.js";
 import { error, heading } from "../utils/style.js";
+import { parsePositiveInt, parseScore } from "../utils/validate.js";
 
 export function registerSearch(program) {
   program
@@ -23,13 +24,13 @@ export function registerSearch(program) {
         const engine = createEngine();
 
         const query = { text: queryText };
-        query.limit = parseInt(opts.limit, 10);
+        query.limit = parsePositiveInt(opts.limit, "--limit");
         if (opts.namespace) query.namespace = opts.namespace;
-        if (opts.timeStart) query.timeStart = parseInt(opts.timeStart, 10);
-        if (opts.timeEnd) query.timeEnd = parseInt(opts.timeEnd, 10);
-        if (opts.cluster) query.clusterId = parseInt(opts.cluster, 10);
-        if (opts.followLinks) query.maxHops = parseInt(opts.followLinks, 10);
-        if (opts.minScore) query.minScore = parseFloat(opts.minScore);
+        if (opts.timeStart) query.timeStart = parsePositiveInt(opts.timeStart, "--time-start");
+        if (opts.timeEnd) query.timeEnd = parsePositiveInt(opts.timeEnd, "--time-end");
+        if (opts.cluster) query.clusterId = parsePositiveInt(opts.cluster, "--cluster");
+        if (opts.followLinks) query.maxHops = parsePositiveInt(opts.followLinks, "--follow-links");
+        if (opts.minScore) query.minScore = parseScore(opts.minScore, "--min-score");
         if (opts.explain) query.withExplanation = true;
         if (opts.excludeSuperseded) query.excludeSuperseded = true;
 

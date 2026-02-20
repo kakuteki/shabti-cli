@@ -1,5 +1,6 @@
 import { createEngine, loadConfig, saveConfig } from "../core/engine.js";
 import { success, error, info, warn } from "../utils/style.js";
+import { parsePositiveInt } from "../utils/validate.js";
 
 export function registerStore(program) {
   program
@@ -17,7 +18,7 @@ export function registerStore(program) {
         if (opts.namespace) options.namespace = opts.namespace;
         if (opts.session) options.sessionId = opts.session;
         if (opts.tags) options.tags = opts.tags.split(",").map((t) => t.trim());
-        if (opts.ttl) options.ttlSeconds = parseInt(opts.ttl, 10);
+        if (opts.ttl) options.ttlSeconds = parsePositiveInt(opts.ttl, "--ttl");
 
         // Model versioning check
         const currentModelId = engine.modelId();

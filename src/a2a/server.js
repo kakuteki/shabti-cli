@@ -2,6 +2,7 @@ import { createServer } from "http";
 import { randomUUID } from "crypto";
 import { buildAgentCard } from "./agentCard.js";
 import { createEngine } from "../core/engine.js";
+import { logger } from "../utils/logger.js";
 
 // ============================================================
 // Task Store (in-memory)
@@ -289,7 +290,9 @@ export function startA2AServer(port = 3000) {
     if (engineError) throw engineError;
     try {
       engine = createEngine();
+      logger.info("A2A engine initialized");
     } catch (err) {
+      logger.error("A2A engine initialization failed", { error: err.message });
       engineError = err;
       throw err;
     }
@@ -366,6 +369,22 @@ export function startA2AServer(port = 3000) {
     console.log(`  Agent Card: ${baseUrl}.well-known/agent-card.json`);
     console.log(`  Skills: ${agentCard.skills.map((s) => s.id).join(", ")}\n`);
   });
+
+  async function shutdown() {
+    console.log("\n  Shutting down A2A server...");
+    server.close();
+    if (engine && engine.shutdown) {
+      try {
+        await engine.shutdown();
+      } catch {
+        // best-effort
+      }
+    }
+    process.exit(0);
+  }
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 
   return server;
 }

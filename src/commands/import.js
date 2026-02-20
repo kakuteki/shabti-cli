@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { createEngine } from "../core/engine.js";
 import { success, error, info, warn } from "../utils/style.js";
 
@@ -11,6 +11,11 @@ export function registerImport(program) {
     .option("--dry-run", "Parse and validate without storing")
     .action(async (file, opts) => {
       try {
+        if (!existsSync(file)) {
+          error(`File not found: ${file}`);
+          process.exitCode = 1;
+          return;
+        }
         const raw = readFileSync(file, "utf8");
         const lines = raw
           .split("\n")
