@@ -406,10 +406,7 @@ impl ShabtiNapi {
 
         let entries = self
             .engine
-            .list_entries(
-                opts.namespace.as_deref(),
-                opts.limit.map(|v| v as usize),
-            )
+            .list_entries(opts.namespace.as_deref(), opts.limit.map(|v| v as usize))
             .map_err(|e| Error::from_reason(format!("{e}")))?;
 
         Ok(entries

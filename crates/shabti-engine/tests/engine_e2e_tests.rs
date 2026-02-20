@@ -347,10 +347,7 @@ async fn engine_store_without_ttl_has_no_expiry() {
         .unwrap();
     assert!(matches!(result, shabti_core::dedup::StoreResult::Stored(_)));
 
-    let results = engine
-        .search_similar("Permanent", 10, None)
-        .await
-        .unwrap();
+    let results = engine.search_similar("Permanent", 10, None).await.unwrap();
     assert_eq!(results.len(), 1);
     assert!(results[0].entry.expires_at.is_none());
 
@@ -380,10 +377,7 @@ async fn engine_expired_entry_excluded_from_search() {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     // Search should only return the permanent entry
-    let results = engine
-        .search_similar("entry", 10, None)
-        .await
-        .unwrap();
+    let results = engine.search_similar("entry", 10, None).await.unwrap();
     assert_eq!(results.len(), 1);
     assert!(results[0].entry.content.contains("Permanent"));
 
@@ -436,10 +430,7 @@ async fn engine_list_entries_with_namespace_filter() {
 
     engine.store("Work item A", &opts_work).await.unwrap();
     engine.store("Work item B", &opts_work).await.unwrap();
-    engine
-        .store("Personal item", &opts_personal)
-        .await
-        .unwrap();
+    engine.store("Personal item", &opts_personal).await.unwrap();
 
     // Filter by namespace
     let work_entries = engine.list_entries(Some("work"), None).unwrap();
