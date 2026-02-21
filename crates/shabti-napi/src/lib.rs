@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use napi::bindgen_prelude::*;
+use shabti_core::contradiction::detect_contradiction;
 use shabti_core::dedup::StoreResult;
 use shabti_core::query::QueryBuilder;
 use shabti_engine::{EngineConfig, ShabtiEngine, StoreOptions};
@@ -132,6 +133,36 @@ pub struct NapiStatus {
     pub qdrant_url: String,
     pub data_dir: String,
     pub model_id: String,
+}
+
+#[napi(object)]
+#[derive(Clone)]
+pub struct NapiContradictionResult {
+    pub detected: bool,
+    pub contradiction_type: Option<String>,
+}
+
+#[napi(object)]
+#[derive(Clone)]
+pub struct NapiGraphInfo {
+    pub node_count: u32,
+    pub edge_count: u32,
+}
+
+/// Detect contradiction between two text strings.
+/// Returns whether a contradiction was found and its type (NumericDifference or NegationDifference).
+#[napi]
+pub fn detect_contradiction_napi(text_a: String, text_b: String) -> NapiContradictionResult {
+    match detect_contradiction(&text_a, &text_b) {
+        Some(ct) => NapiContradictionResult {
+            detected: true,
+            contradiction_type: Some(format!("{ct:?}")),
+        },
+        None => NapiContradictionResult {
+            detected: false,
+            contradiction_type: None,
+        },
+    }
 }
 
 // ============================================================
@@ -455,5 +486,14 @@ impl ShabtiNapi {
             .await
             .map_err(|e| Error::from_reason(format!("{e}")))?;
         Ok(())
+    }
+
+    #[napi]
+    pub fn graph_info(&self) -> NapiGraphInfo {
+        let graph = self.engine.graph();
+        NapiGraphInfo {
+            node_count: graph.node_count() as u32,
+            edge_count: graph.edge_count() as u32,
+        }
     }
 }

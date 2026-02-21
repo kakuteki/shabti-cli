@@ -42,6 +42,72 @@ describe("Node.js API exports", () => {
   });
 });
 
+describe("Root native.d.ts completeness", () => {
+  const rootDtsPath = resolve(ROOT, "native.d.ts");
+  const hasRootDts = existsSync(rootDtsPath);
+
+  it.skipIf(!hasRootDts)("declares listEntries and gc methods", () => {
+    const content = readFileSync(rootDtsPath, "utf8");
+    expect(content).toContain("listEntries");
+    expect(content).toContain("gc(): Promise<number>");
+  });
+
+  it.skipIf(!hasRootDts)("declares NapiExportEntry interface", () => {
+    const content = readFileSync(rootDtsPath, "utf8");
+    expect(content).toContain("NapiExportEntry");
+    expect(content).toContain("lifecycleState");
+    expect(content).toContain("originType");
+  });
+
+  it.skipIf(!hasRootDts)("declares NapiListOptions interface", () => {
+    const content = readFileSync(rootDtsPath, "utf8");
+    expect(content).toContain("NapiListOptions");
+    expect(content).toContain("includeEmbeddings");
+  });
+
+  it.skipIf(!hasRootDts)("declares ttlSeconds in NapiStoreOptions", () => {
+    const content = readFileSync(rootDtsPath, "utf8");
+    expect(content).toContain("ttlSeconds");
+  });
+
+  it.skipIf(!hasRootDts)("declares expiresAt in NapiSearchResult and NapiQueryResult", () => {
+    const content = readFileSync(rootDtsPath, "utf8");
+    // Should appear at least twice (SearchResult + QueryResult)
+    const matches = content.match(/expiresAt/g);
+    expect(matches).not.toBeNull();
+    expect(matches.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("New NAPI bindings type declarations", () => {
+  const dtsPath = resolve(ROOT, "crates", "shabti-napi", "index.d.ts");
+  const hasDts = existsSync(dtsPath);
+
+  it.skipIf(!hasDts)("declares detectContradictionNapi static function", () => {
+    const content = readFileSync(dtsPath, "utf8");
+    expect(content).toContain("detectContradictionNapi");
+  });
+
+  it.skipIf(!hasDts)("declares graphInfo method", () => {
+    const content = readFileSync(dtsPath, "utf8");
+    expect(content).toContain("graphInfo");
+  });
+
+  it.skipIf(!hasDts)("declares NapiGraphInfo interface", () => {
+    const content = readFileSync(dtsPath, "utf8");
+    expect(content).toContain("NapiGraphInfo");
+    expect(content).toContain("nodeCount");
+    expect(content).toContain("edgeCount");
+  });
+
+  it.skipIf(!hasDts)("declares NapiContradictionResult interface", () => {
+    const content = readFileSync(dtsPath, "utf8");
+    expect(content).toContain("NapiContradictionResult");
+    expect(content).toContain("detected");
+    expect(content).toContain("contradictionType");
+  });
+});
+
 describe("Type definitions completeness", () => {
   const dtsPath = resolve(ROOT, "crates", "shabti-napi", "index.d.ts");
   const hasDts = existsSync(dtsPath);
