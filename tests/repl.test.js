@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { run } from "./helpers.js";
 
 describe("REPL / no-args (non-TTY)", () => {
@@ -20,5 +20,39 @@ describe("REPL / no-args (non-TTY)", () => {
     expect(stdout).toContain("I shall do it");
     expect(stdout).toContain("hello");
     expect(stdout).toContain("chat");
+  });
+});
+
+describe("launchRepl", () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("returns null when OPENAI_API_KEY is not set", async () => {
+    delete process.env.OPENAI_API_KEY;
+    vi.doMock("dotenv/config", () => ({}));
+    const { launchRepl } = await import("../src/repl/index.js");
+    const result = await launchRepl();
+    expect(result).toBeNull();
+  });
+
+  it("returns null when OPENAI_API_KEY is placeholder", async () => {
+    process.env.OPENAI_API_KEY = "your-api-key-here";
+    vi.doMock("dotenv/config", () => ({}));
+    const { launchRepl } = await import("../src/repl/index.js");
+    const result = await launchRepl();
+    expect(result).toBeNull();
+  });
+
+  it("exports launchRepl as a function", async () => {
+    vi.doMock("dotenv/config", () => ({}));
+    const mod = await import("../src/repl/index.js");
+    expect(typeof mod.launchRepl).toBe("function");
   });
 });
