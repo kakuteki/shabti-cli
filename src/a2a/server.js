@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { buildAgentCard } from "./agentCard.js";
 import { createEngine } from "../core/engine.js";
 import { logger } from "../utils/logger.js";
+import { normalizeText } from "../utils/normalize.js";
 
 // ============================================================
 // Task Store (in-memory)
@@ -62,7 +63,7 @@ async function handleMemoryStore(engine, parts) {
     throw Object.assign(new Error("Missing content in message parts"), { code: -32602 });
   }
 
-  const result = await engine.store(content, opts);
+  const result = await engine.store(normalizeText(content), opts);
   return {
     artifactId: randomUUID(),
     name: "store_result",
@@ -87,7 +88,7 @@ async function handleMemorySearch(engine, parts) {
     throw Object.assign(new Error("Missing query in message parts"), { code: -32602 });
   }
 
-  const results = await engine.executeQuery({ text: query, limit });
+  const results = await engine.executeQuery({ text: normalizeText(query), limit });
   const formatted = results.map((r) => ({
     id: r.id,
     content: r.content,
