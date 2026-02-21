@@ -49,6 +49,7 @@ shabti status
 | ----------------- | ----------------------------------- |
 | `store <content>` | Store a memory entry                |
 | `search <query>`  | Search memory entries               |
+| `delete <id>`     | Delete a memory entry by ID         |
 | `status`          | Show engine status                  |
 | `export`          | Export memories as JSONL            |
 | `import <file>`   | Import memories from JSONL          |
@@ -77,6 +78,12 @@ shabti search "programming" --explain           # show score breakdown
 shabti search "AI" --follow-links 2             # expand via graph links
 shabti search "recent events" --min-score 0.5
 shabti search "query" --json                    # JSON output
+```
+
+### delete
+
+```bash
+shabti delete <uuid>
 ```
 
 ### export / import

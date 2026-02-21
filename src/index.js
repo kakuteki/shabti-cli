@@ -15,6 +15,7 @@ import { registerStatus } from "./commands/status.js";
 import { registerExport } from "./commands/export.js";
 import { registerImport } from "./commands/import.js";
 import { registerStore } from "./commands/store.js";
+import { registerDelete } from "./commands/delete.js";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -84,6 +85,7 @@ function buildProgram() {
   registerExport(program);
   registerImport(program);
   registerStore(program);
+  registerDelete(program);
 
   program
     .command("gc")
