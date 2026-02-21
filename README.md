@@ -56,6 +56,7 @@ shabti status
 | `snapshot`        | Manage storage snapshots            |
 | `config`          | Manage configuration                |
 | `gc`              | Garbage collect expired entries     |
+| `health`          | Run health checks on engine         |
 | `a2a`             | Start A2A protocol server           |
 | `chat`            | Interactive chat with OpenAI        |
 | `mcp-config`      | Print MCP server configuration JSON |

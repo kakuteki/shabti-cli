@@ -99,6 +99,15 @@ describe("status command", () => {
   });
 });
 
+describe("health command", () => {
+  it("shows help with --help", async () => {
+    const { stdout, code } = await run(["health", "--help"]);
+    expect(code).toBe(0);
+    expect(stdout).toContain("Run health checks");
+    expect(stdout).toContain("--json");
+  });
+});
+
 describe("graceful degradation", () => {
   it("store command shows error on invalid qdrant", async () => {
     const { stdout, stderr, code } = await run(
