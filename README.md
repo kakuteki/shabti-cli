@@ -247,6 +247,10 @@ Discoverable at `GET /.well-known/agent-card.json`.
 | `tasks/get`    | Retrieve task status and results |
 | `tasks/cancel` | Cancel a running task            |
 
+### CORS
+
+The A2A server sets `Access-Control-Allow-Origin: *` to allow requests from any origin. This is intentional for local development and inter-agent communication where the caller's origin is not known in advance. For production deployments behind a reverse proxy, restrict the origin at the proxy level.
+
 ## Node.js API
 
 ```javascript
