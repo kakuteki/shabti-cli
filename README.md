@@ -12,13 +12,24 @@ npm install -g shabti
 
 ### Prerequisites
 
-Shabti requires a running Qdrant instance for vector storage:
+Shabti requires a running Qdrant instance for vector storage.
+
+**Option 1: Docker**
 
 ```bash
 docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant
 ```
 
-Verify the connection:
+**Option 2: Native binary (no Docker)**
+
+Download the binary for your platform from [Qdrant releases](https://github.com/qdrant/qdrant/releases) and run it directly.
+
+```bash
+# Check for locally installed qdrant
+shabti config setup --detect
+```
+
+**Verify the connection:**
 
 ```bash
 shabti config setup --check

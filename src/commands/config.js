@@ -49,21 +49,65 @@ export function registerConfig(program) {
     .command("setup")
     .description("Show Qdrant setup instructions")
     .option("--check", "Test connection to Qdrant")
+    .option("--detect", "Detect locally installed qdrant binary")
     .action(async (opts) => {
       const config = loadConfig();
       heading("Qdrant Setup");
       console.log();
       console.log("  shabti requires a running Qdrant instance for vector storage.");
       console.log();
-      console.log(chalk.cyan("  Quick start with Docker:"));
+
+      // Option 1: Docker
+      console.log(chalk.cyan("  Option 1: Docker"));
       console.log();
       console.log(`    docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant`);
       console.log();
+
+      // Option 2: Native binary
+      console.log(chalk.cyan("  Option 2: Native binary (no Docker required)"));
+      console.log();
+      console.log(
+        `    Download from: ${chalk.underline("https://github.com/qdrant/qdrant/releases")}`,
+      );
+      console.log();
+      const plat = process.platform;
+      if (plat === "linux") {
+        console.log("    Linux:");
+        console.log(
+          "      wget https://github.com/qdrant/qdrant/releases/latest/download/qdrant-x86_64-unknown-linux-gnu.tar.gz",
+        );
+        console.log("      tar xzf qdrant-x86_64-unknown-linux-gnu.tar.gz");
+        console.log("      ./qdrant");
+      } else if (plat === "darwin") {
+        console.log("    macOS:");
+        console.log("      Download the macOS binary from the releases page,");
+        console.log("      or build from source: cargo install qdrant");
+      } else if (plat === "win32") {
+        console.log("    Windows:");
+        console.log("      Download qdrant.exe from the releases page and run it.");
+      }
+      console.log();
+
       console.log(`  Current Qdrant URL: ${chalk.yellow(config.qdrant_url)}`);
       console.log();
       console.log("  To change the URL:");
       console.log(`    shabti config set qdrant_url ${chalk.dim("<url>")}`);
       console.log();
+
+      if (opts.detect) {
+        const { execFileSync } = await import("node:child_process");
+        const cmd = plat === "win32" ? "where" : "which";
+        try {
+          const result = execFileSync(cmd, ["qdrant"], {
+            encoding: "utf8",
+            timeout: 5000,
+          }).trim();
+          success(`Qdrant binary found at: ${result}`);
+        } catch (_) {
+          console.log(chalk.yellow("  Qdrant binary not found in PATH."));
+          console.log("  Download it from https://github.com/qdrant/qdrant/releases");
+        }
+      }
 
       if (opts.check) {
         const restUrl = config.qdrant_url.replace(":6334", ":6333");
