@@ -337,6 +337,91 @@ describe("dispatchRpc with mock engine", () => {
     expect(res.result.history.length).toBe(1);
     expect(res.result.history[0].messageId).toBe("msg-hist-2");
   });
+
+  it("message/send with unknown skill returns -32004", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-unk-1",
+        parts: [{ kind: "data", data: { skill: "nonexistent_skill" } }],
+      },
+    });
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32004);
+  });
+
+  it("message/send memory_store without content returns -32602", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-err-1",
+        parts: [{ kind: "data", data: { skill: "memory_store" } }],
+      },
+    });
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32602);
+  });
+
+  it("message/send memory_search without query returns -32602", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-err-2",
+        parts: [{ kind: "data", data: { skill: "memory_search" } }],
+      },
+    });
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32602);
+  });
+
+  it("message/send with engine error returns -32603", async () => {
+    const brokenEngine = {
+      ...mockEngine,
+      store: () => {
+        throw new Error("engine boom");
+      },
+    };
+    const res = await dispatchRpc(brokenEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-err-3",
+        parts: [{ kind: "data", data: { skill: "memory_store", content: "test" } }],
+      },
+    });
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32603);
+  });
+
+  it("tasks/cancel on submitted task succeeds", async () => {
+    // Create a task directly in submitted state
+    const task = store.create();
+    const res = await dispatchRpc(mockEngine, store, "tasks/cancel", { id: task.id });
+    expect(res.result).toBeDefined();
+    expect(res.result.status.state).toBe("canceled");
+  });
+
+  it("tasks/cancel without id returns -32602", async () => {
+    const res = await dispatchRpc(mockEngine, store, "tasks/cancel", {});
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32602);
+  });
+
+  it("message/send preserves contextId from message", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-ctx-1",
+        contextId: "my-context",
+        parts: [{ kind: "data", data: { skill: "memory_status" } }],
+      },
+    });
+    expect(res.result.contextId).toBe("my-context");
+  });
 });
 
 // ================================================================
