@@ -79,6 +79,22 @@ describe("delete command", () => {
   });
 });
 
+describe("get command", () => {
+  it("shows help with --help", async () => {
+    const { stdout, code } = await run(["get", "--help"]);
+    expect(code).toBe(0);
+    expect(stdout).toContain("Retrieve a memory entry");
+    expect(stdout).toContain("<id>");
+    expect(stdout).toContain("--json");
+  });
+
+  it("fails when no id is provided", async () => {
+    const { stderr, code } = await run(["get"]);
+    expect(code).not.toBe(0);
+    expect(stderr).toContain("missing required argument");
+  });
+});
+
 describe("snapshot command", () => {
   it("shows help with --help", async () => {
     const { stdout, code } = await run(["snapshot", "--help"]);
