@@ -24,3 +24,20 @@ jobs:
 
       - run: npm ci
       - run: npm run ci
+
+      - name: Coverage summary
+        if: always() && matrix.node-version == 22
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            node -e "
+              const s = require('./coverage/coverage-summary.json').total;
+              const fmt = (v) => v.pct + '%';
+              console.log('### Coverage Summary');
+              console.log('| Metric | Coverage |');
+              console.log('|--------|----------|');
+              console.log('| Statements | ' + fmt(s.statements) + ' |');
+              console.log('| Branches   | ' + fmt(s.branches) + ' |');
+              console.log('| Functions  | ' + fmt(s.functions) + ' |');
+              console.log('| Lines      | ' + fmt(s.lines) + ' |');
+            " >> "$GITHUB_STEP_SUMMARY"
+          fi

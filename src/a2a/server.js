@@ -325,7 +325,7 @@ export function startA2AServer(port = 3000) {
       let body;
       try {
         body = await readBody(req);
-      } catch {
+      } catch (_) {
         res.writeHead(400);
         return res.end();
       }
@@ -333,7 +333,7 @@ export function startA2AServer(port = 3000) {
       let rpc;
       try {
         rpc = JSON.parse(body);
-      } catch {
+      } catch (_) {
         res.writeHead(200, { "Content-Type": "application/json" });
         return res.end(
           JSON.stringify({
@@ -376,7 +376,7 @@ export function startA2AServer(port = 3000) {
     if (engine && engine.shutdown) {
       try {
         await engine.shutdown();
-      } catch {
+      } catch (_) {
         // best-effort
       }
     }

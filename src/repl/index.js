@@ -26,7 +26,7 @@ export async function launchRepl() {
     info(
       `Memory engine connected (${chalk.cyan("/remember")}, ${chalk.cyan("/recall")} available)`,
     );
-  } catch {
+  } catch (_) {
     warn("Memory engine not available. Chat-only mode (start Qdrant to enable memory).");
   }
 

@@ -32,7 +32,7 @@ export function registerImport(program) {
         for (let i = 0; i < lines.length; i++) {
           try {
             entries.push(JSON.parse(lines[i]));
-          } catch {
+          } catch (_) {
             warn(`Skipping invalid JSON on line ${i + 1}`);
           }
         }
