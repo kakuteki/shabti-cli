@@ -103,6 +103,26 @@ const TOOLS = [
       properties: {},
     },
   },
+  {
+    name: "memory_health",
+    description:
+      "Run health checks on the memory engine (Qdrant connectivity, engine status, embedding model)",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "memory_get",
+    description: "Retrieve a specific memory entry by its UUID",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "UUID of the memory entry to retrieve" },
+      },
+      required: ["id"],
+    },
+  },
 ];
 
 const RESOURCES = [
@@ -365,6 +385,78 @@ async function handleToolsCall(id, params) {
           {
             type: "text",
             text: JSON.stringify({ removed }, null, 2),
+          },
+        ],
+      });
+    } catch (err) {
+      return respondError(id, -32603, err.message);
+    }
+  }
+
+  if (name === "memory_health") {
+    const checks = [];
+    const config = loadConfig();
+    const qdrantUrl = config.qdrant_url.replace(/:\d+$/, ":6333");
+    try {
+      const res = await fetch(`${qdrantUrl}/healthz`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      checks.push({
+        name: "qdrant",
+        status: res.ok ? "ok" : "degraded",
+        message: res.ok ? "Reachable" : `HTTP ${res.status}`,
+      });
+    } catch (err) {
+      checks.push({ name: "qdrant", status: "error", message: err.message });
+    }
+
+    if (eng) {
+      try {
+        const status = eng.status();
+        checks.push({
+          name: "engine",
+          status: "ok",
+          message: `${status.entryCount} entries, tier: ${status.tier}`,
+        });
+      } catch (err) {
+        checks.push({ name: "engine", status: "error", message: err.message });
+      }
+      try {
+        const modelId = eng.modelId();
+        checks.push({ name: "embedding", status: "ok", message: modelId });
+      } catch (err) {
+        checks.push({ name: "embedding", status: "error", message: err.message });
+      }
+    } else {
+      checks.push({ name: "engine", status: "error", message: "Engine not available" });
+    }
+
+    const healthy = checks.every((c) => c.status === "ok");
+    return respond(id, {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({ healthy, checks }, null, 2),
+        },
+      ],
+    });
+  }
+
+  if (name === "memory_get") {
+    if (!eng) {
+      return respondError(id, -32603, "Engine not available");
+    }
+    const entryId = args?.id;
+    if (!entryId) {
+      return respondError(id, -32602, "Missing required parameter: id");
+    }
+    try {
+      const entry = await eng.get(entryId);
+      return respond(id, {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(entry, null, 2),
           },
         ],
       });

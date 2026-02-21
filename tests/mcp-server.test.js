@@ -366,6 +366,114 @@ describe("MCP server", () => {
     }
   });
 
+  it("tools/list includes memory_health and memory_get", async () => {
+    const proc = spawnMcp();
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      const res = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/list",
+        params: {},
+      });
+
+      const names = res.result.tools.map((t) => t.name);
+      expect(names).toContain("memory_health");
+      expect(names).toContain("memory_get");
+    } finally {
+      proc.kill();
+    }
+  });
+
+  it.skipIf(!qdrantAvailable)("tools/call memory_health returns health checks", async () => {
+    const proc = spawnMcp();
+    try {
+      await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      });
+
+      const res = await sendRequest(proc, {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "memory_health",
+          arguments: {},
+        },
+      });
+
+      expect(res.result).toBeDefined();
+      expect(res.result.content).toBeInstanceOf(Array);
+      const output = JSON.parse(res.result.content[0].text);
+      expect(output).toHaveProperty("healthy");
+      expect(output).toHaveProperty("checks");
+      expect(output.checks).toBeInstanceOf(Array);
+      expect(output.checks.length).toBeGreaterThanOrEqual(1);
+      const checkNames = output.checks.map((c) => c.name);
+      expect(checkNames).toContain("qdrant");
+    } finally {
+      proc.kill();
+    }
+  });
+
+  it(
+    "tools/call memory_health with unavailable engine returns checks with errors",
+    { timeout: 30_000 },
+    async () => {
+      const proc = spawnMcp({ SHABTI_QDRANT_URL: "http://localhost:19999" });
+      try {
+        await sendRequest(proc, {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "initialize",
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "test", version: "1.0" },
+          },
+        });
+
+        const res = await sendRequest(
+          proc,
+          {
+            jsonrpc: "2.0",
+            id: 2,
+            method: "tools/call",
+            params: {
+              name: "memory_health",
+              arguments: {},
+            },
+          },
+          20_000,
+        );
+
+        expect(res.result).toBeDefined();
+        const output = JSON.parse(res.result.content[0].text);
+        expect(output.healthy).toBe(false);
+        expect(output.checks).toBeInstanceOf(Array);
+      } finally {
+        proc.kill();
+      }
+    },
+  );
+
   it("tools/list includes memory_delete and memory_list", async () => {
     const proc = spawnMcp();
     try {

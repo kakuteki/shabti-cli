@@ -210,11 +210,13 @@ Or manually add to your MCP settings:
 | --------------- | ----------------------------------------------------------- |
 | `memory_store`  | Store a memory entry with optional namespace, tags, and TTL |
 | `memory_search` | Search memories by semantic similarity                      |
+| `memory_get`    | Retrieve a specific memory entry by UUID                    |
 | `memory_delete` | Delete a memory entry by ID                                 |
 | `memory_list`   | List recent memory entries                                  |
 | `memory_export` | Export entries as JSONL                                     |
 | `memory_gc`     | Garbage collect expired entries                             |
 | `memory_status` | Get engine status                                           |
+| `memory_health` | Run health checks on engine components                      |
 
 ### MCP Resources
 
