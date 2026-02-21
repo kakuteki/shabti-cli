@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { success, info, warn, error } from "../utils/style.js";
+import { normalizeText } from "../utils/normalize.js";
 
 const COMMANDS = {
   "/help": "Show this help message",
@@ -98,7 +99,7 @@ async function handleRemember(text, engine) {
     return true;
   }
   try {
-    const result = await engine.store(text, {});
+    const result = await engine.store(normalizeText(text), {});
     if (result.status === "stored") {
       success(`Remembered: ${result.id}`);
     } else {
@@ -125,7 +126,7 @@ async function handleRecall(query, engine) {
     return true;
   }
   try {
-    const results = await engine.executeQuery({ text: query, limit: 5 });
+    const results = await engine.executeQuery({ text: normalizeText(query), limit: 5 });
     console.log();
     if (results.length === 0) {
       console.log(chalk.dim("  No memories found."));

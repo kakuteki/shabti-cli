@@ -3,6 +3,7 @@ import Table from "cli-table3";
 import { createEngine } from "../core/engine.js";
 import { error, heading } from "../utils/style.js";
 import { parsePositiveInt, parseScore } from "../utils/validate.js";
+import { normalizeText } from "../utils/normalize.js";
 
 export function registerSearch(program) {
   program
@@ -23,7 +24,7 @@ export function registerSearch(program) {
       try {
         const engine = createEngine();
 
-        const query = { text: queryText };
+        const query = { text: normalizeText(queryText) };
         query.limit = parsePositiveInt(opts.limit, "--limit");
         if (opts.namespace) query.namespace = opts.namespace;
         if (opts.timeStart) query.timeStart = parsePositiveInt(opts.timeStart, "--time-start");

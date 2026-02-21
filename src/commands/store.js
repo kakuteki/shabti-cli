@@ -1,6 +1,7 @@
 import { createEngine, loadConfig, saveConfig } from "../core/engine.js";
 import { success, error, info, warn } from "../utils/style.js";
 import { parsePositiveInt } from "../utils/validate.js";
+import { normalizeText } from "../utils/normalize.js";
 
 export function registerStore(program) {
   program
@@ -31,7 +32,7 @@ export function registerStore(program) {
           }
         }
 
-        const result = await engine.store(content, options);
+        const result = await engine.store(normalizeText(content), options);
 
         if (result.status === "stored") {
           success(`Stored: ${result.id}`);

@@ -3,6 +3,7 @@ import { createInterface } from "readline";
 import { createEngine, loadConfig } from "../core/engine.js";
 import { createEngineWithRetry } from "../core/retry.js";
 import { logger } from "../utils/logger.js";
+import { normalizeText } from "../utils/normalize.js";
 
 const SERVER_INFO = {
   name: "shabti-memory",
@@ -228,7 +229,7 @@ async function handleToolsCall(id, params) {
       if (args.namespace) opts.namespace = args.namespace;
       if (args.tags) opts.tags = args.tags;
       if (args.ttl) opts.ttlSeconds = args.ttl;
-      const result = await eng.store(content, opts);
+      const result = await eng.store(normalizeText(content), opts);
       return respond(id, {
         content: [
           {
@@ -256,7 +257,7 @@ async function handleToolsCall(id, params) {
     }
     try {
       const limit = args.limit || 10;
-      const queryObj = { text: query, limit };
+      const queryObj = { text: normalizeText(query), limit };
       if (args.namespace) queryObj.namespace = args.namespace;
       const results = await eng.executeQuery(queryObj);
       const formatted = results.map((r) => ({
