@@ -9,6 +9,11 @@ export default defineConfig({
       include: ["src/**/*.js"],
       exclude: ["src/index.js", "src/mcp/server.js", "src/a2a/standalone.js"],
       reporter: ["text", "lcov", "json-summary"],
+      thresholds: {
+        lines: 35,
+        branches: 40,
+        functions: 35,
+      },
     },
   },
 });
