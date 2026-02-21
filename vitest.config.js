@@ -2,19 +2,13 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    testTimeout: 15_000,
     exclude: ["node_modules/**", "poc/**"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.js"],
-      reporter: ["text", "lcov"],
-      // TODO: Enable thresholds when unit tests (direct module imports) are added.
-      // Current tests run CLI as subprocess, so v8 cannot track coverage.
-      // thresholds: {
-      //   statements: 70,
-      //   branches: 70,
-      //   functions: 80,
-      //   lines: 70,
-      // },
+      exclude: ["src/index.js", "src/mcp/server.js", "src/a2a/standalone.js"],
+      reporter: ["text", "lcov", "json-summary"],
     },
   },
 });

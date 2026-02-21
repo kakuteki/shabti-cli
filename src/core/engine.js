@@ -26,7 +26,7 @@ export function loadConfig() {
   if (existsSync(CONFIG_PATH)) {
     try {
       config = { ...config, ...JSON.parse(readFileSync(CONFIG_PATH, "utf8")) };
-    } catch {
+    } catch (_) {
       // keep defaults
     }
   }

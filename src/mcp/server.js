@@ -428,7 +428,7 @@ async function handleRequest(line) {
   let req;
   try {
     req = JSON.parse(line);
-  } catch {
+  } catch (_) {
     return respondError(null, -32700, "Parse error");
   }
 
@@ -465,7 +465,7 @@ async function shutdown() {
   if (engine && engine.shutdown) {
     try {
       await engine.shutdown();
-    } catch {
+    } catch (_) {
       // best-effort
     }
   }
