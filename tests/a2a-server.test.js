@@ -37,12 +37,18 @@ describe("Agent Card", () => {
     expect(card.capabilities).toBeDefined();
     expect(card.capabilities.streaming).toBe(false);
     expect(card.skills).toBeInstanceOf(Array);
-    expect(card.skills.length).toBe(3);
+    expect(card.skills.length).toBe(9);
 
     const skillIds = card.skills.map((s) => s.id);
     expect(skillIds).toContain("memory_store");
     expect(skillIds).toContain("memory_search");
     expect(skillIds).toContain("memory_status");
+    expect(skillIds).toContain("memory_get");
+    expect(skillIds).toContain("memory_delete");
+    expect(skillIds).toContain("memory_list");
+    expect(skillIds).toContain("memory_export");
+    expect(skillIds).toContain("memory_gc");
+    expect(skillIds).toContain("memory_health");
   });
 
   it("includes version from package.json", () => {
@@ -97,6 +103,35 @@ describe("resolveSkill", () => {
 
   it("returns null for unrecognizable text", () => {
     expect(resolveSkill([{ kind: "text", text: "hello world" }])).toBeNull();
+  });
+
+  it("resolves delete from text keywords", () => {
+    expect(resolveSkill([{ kind: "text", text: "Delete that entry" }])).toBe("memory_delete");
+    expect(resolveSkill([{ kind: "text", text: "Remove old memories" }])).toBe("memory_delete");
+  });
+
+  it("resolves get from text keywords", () => {
+    expect(resolveSkill([{ kind: "text", text: "Get entry details" }])).toBe("memory_get");
+    expect(resolveSkill([{ kind: "text", text: "Retrieve the record" }])).toBe("memory_get");
+  });
+
+  it("resolves list from text keywords", () => {
+    expect(resolveSkill([{ kind: "text", text: "List all memories" }])).toBe("memory_list");
+  });
+
+  it("resolves export from text keywords", () => {
+    expect(resolveSkill([{ kind: "text", text: "Export the data" }])).toBe("memory_export");
+    expect(resolveSkill([{ kind: "text", text: "Dump all entries" }])).toBe("memory_export");
+  });
+
+  it("resolves gc from text keywords", () => {
+    expect(resolveSkill([{ kind: "text", text: "Run garbage collect" }])).toBe("memory_gc");
+    expect(resolveSkill([{ kind: "text", text: "Cleanup expired entries" }])).toBe("memory_gc");
+  });
+
+  it("resolves data with id field to memory_get", () => {
+    const parts = [{ kind: "data", data: { id: "some-uuid" } }];
+    expect(resolveSkill(parts)).toBe("memory_get");
   });
 
   it("returns null for empty parts", () => {
@@ -230,7 +265,35 @@ describe("dispatchRpc with mock engine", () => {
       entryCount: 42,
       tier: "local",
       modelId: "mock-model",
+      qdrantUrl: "http://localhost:6334",
     }),
+    modelId: () => "mock-model",
+    delete: async () => {},
+    get: async (id) => ({
+      id,
+      content: "mock content",
+      score: 1.0,
+      namespace: "default",
+      createdAt: 1700000000,
+    }),
+    executeQuery: async () => [
+      { id: "id-1", content: "entry 1", score: 0.9, namespace: "default" },
+    ],
+    listEntries: () => [
+      {
+        id: "id-1",
+        content: "entry 1",
+        namespace: "default",
+        tags: [],
+        keywords: [],
+        sessionId: "",
+        createdAt: 1700000000,
+        lifecycleState: "Active",
+        originType: "User",
+        modelId: "mock",
+      },
+    ],
+    gc: async () => 3,
   };
 
   beforeEach(() => {
@@ -408,6 +471,127 @@ describe("dispatchRpc with mock engine", () => {
     const res = await dispatchRpc(mockEngine, store, "tasks/cancel", {});
     expect(res.error).toBeDefined();
     expect(res.error.code).toBe(-32602);
+  });
+
+  it("message/send memory_delete removes entry and returns completed", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-del-1",
+        parts: [{ kind: "data", data: { skill: "memory_delete", id: "test-uuid" } }],
+      },
+    });
+    expect(res.result).toBeDefined();
+    expect(res.result.status.state).toBe("completed");
+    const data = res.result.artifacts[0].parts[0].data;
+    expect(data.deleted).toBe(true);
+    expect(data.id).toBe("test-uuid");
+  });
+
+  it("message/send memory_delete without id returns -32602", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-del-2",
+        parts: [{ kind: "data", data: { skill: "memory_delete" } }],
+      },
+    });
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32602);
+  });
+
+  it("message/send memory_get retrieves entry", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-get-2",
+        parts: [{ kind: "data", data: { skill: "memory_get", id: "test-uuid" } }],
+      },
+    });
+    expect(res.result).toBeDefined();
+    expect(res.result.status.state).toBe("completed");
+    const data = res.result.artifacts[0].parts[0].data;
+    expect(data.id).toBe("test-uuid");
+    expect(data.content).toBe("mock content");
+  });
+
+  it("message/send memory_get without id returns -32602", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-get-3",
+        parts: [{ kind: "data", data: { skill: "memory_get" } }],
+      },
+    });
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32602);
+  });
+
+  it("message/send memory_list returns entries", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-list-1",
+        parts: [{ kind: "data", data: { skill: "memory_list", limit: 5 } }],
+      },
+    });
+    expect(res.result).toBeDefined();
+    expect(res.result.status.state).toBe("completed");
+    const data = res.result.artifacts[0].parts[0].data;
+    expect(data.entries).toBeInstanceOf(Array);
+    expect(typeof data.count).toBe("number");
+  });
+
+  it("message/send memory_export returns JSONL data", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-export-1",
+        parts: [{ kind: "data", data: { skill: "memory_export" } }],
+      },
+    });
+    expect(res.result).toBeDefined();
+    expect(res.result.status.state).toBe("completed");
+    const data = res.result.artifacts[0].parts[0].data;
+    expect(typeof data.entries).toBe("number");
+    expect(typeof data.data).toBe("string");
+  });
+
+  it("message/send memory_gc returns removed count", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-gc-1",
+        parts: [{ kind: "data", data: { skill: "memory_gc" } }],
+      },
+    });
+    expect(res.result).toBeDefined();
+    expect(res.result.status.state).toBe("completed");
+    const data = res.result.artifacts[0].parts[0].data;
+    expect(data.removed).toBe(3);
+  });
+
+  it("message/send memory_health returns health checks", async () => {
+    const res = await dispatchRpc(mockEngine, store, "message/send", {
+      message: {
+        kind: "message",
+        role: "user",
+        messageId: "msg-health-1",
+        parts: [{ kind: "data", data: { skill: "memory_health" } }],
+      },
+    });
+    expect(res.result).toBeDefined();
+    expect(res.result.status.state).toBe("completed");
+    const data = res.result.artifacts[0].parts[0].data;
+    expect(typeof data.healthy).toBe("boolean");
+    expect(data.checks).toBeInstanceOf(Array);
   });
 
   it("message/send preserves contextId from message", async () => {

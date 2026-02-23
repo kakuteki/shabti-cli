@@ -122,6 +122,112 @@ function handleMemoryStatus(engine) {
   };
 }
 
+async function handleMemoryDelete(engine, parts) {
+  let id = null;
+
+  for (const part of parts) {
+    if (part.kind === "data" && part.data?.id) {
+      id = part.data.id;
+    }
+  }
+
+  if (!id) {
+    throw Object.assign(new Error("Missing id in message parts"), { code: -32602 });
+  }
+
+  await engine.delete(id);
+  return {
+    artifactId: randomUUID(),
+    name: "delete_result",
+    parts: [{ kind: "data", data: { deleted: true, id } }],
+  };
+}
+
+async function handleMemoryGet(engine, parts) {
+  let id = null;
+
+  for (const part of parts) {
+    if (part.kind === "data" && part.data?.id) {
+      id = part.data.id;
+    }
+  }
+
+  if (!id) {
+    throw Object.assign(new Error("Missing id in message parts"), { code: -32602 });
+  }
+
+  const entry = await engine.get(id);
+  return {
+    artifactId: randomUUID(),
+    name: "get_result",
+    parts: [{ kind: "data", data: entry }],
+  };
+}
+
+function handleMemoryList(engine, parts) {
+  let opts = {};
+
+  for (const part of parts) {
+    if (part.kind === "data" && part.data) {
+      if (part.data.limit) opts.limit = part.data.limit;
+      if (part.data.namespace) opts.namespace = part.data.namespace;
+    }
+  }
+
+  const entries = engine.listEntries(opts);
+  return {
+    artifactId: randomUUID(),
+    name: "list_result",
+    parts: [{ kind: "data", data: { entries, count: entries.length } }],
+  };
+}
+
+function handleMemoryExport(engine) {
+  const entries = engine.listEntries();
+  const lines = entries.map((e) => JSON.stringify(e));
+  return {
+    artifactId: randomUUID(),
+    name: "export_result",
+    parts: [{ kind: "data", data: { entries: entries.length, data: lines.join("\n") } }],
+  };
+}
+
+async function handleMemoryGc(engine) {
+  const removed = await engine.gc();
+  return {
+    artifactId: randomUUID(),
+    name: "gc_result",
+    parts: [{ kind: "data", data: { removed } }],
+  };
+}
+
+async function handleMemoryHealth(engine) {
+  const checks = [];
+  const status = engine.status();
+  const qdrantUrl = status.qdrantUrl.replace(/:\d+$/, ":6333");
+
+  try {
+    const res = await fetch(`${qdrantUrl}/healthz`, { signal: AbortSignal.timeout(3000) });
+    checks.push({
+      name: "qdrant",
+      status: res.ok ? "ok" : "degraded",
+      message: res.ok ? "Reachable" : `HTTP ${res.status}`,
+    });
+  } catch (err) {
+    checks.push({ name: "qdrant", status: "error", message: err.message });
+  }
+
+  checks.push({ name: "engine", status: "ok", message: `${status.entryCount} entries` });
+  checks.push({ name: "embedding", status: "ok", message: `Model: ${engine.modelId()}` });
+
+  const healthy = checks.every((c) => c.status === "ok");
+  return {
+    artifactId: randomUUID(),
+    name: "health_result",
+    parts: [{ kind: "data", data: { healthy, checks } }],
+  };
+}
+
 // ============================================================
 // Skill Router
 // ============================================================
@@ -140,6 +246,11 @@ export function resolveSkill(parts) {
       const lower = part.text.toLowerCase();
       if (/\b(store|save|remember)\b/.test(lower)) return "memory_store";
       if (/\b(search|find|recall|query)\b/.test(lower)) return "memory_search";
+      if (/\b(delete|remove)\b/.test(lower)) return "memory_delete";
+      if (/\b(get|retrieve)\b/.test(lower)) return "memory_get";
+      if (/\b(list)\b/.test(lower)) return "memory_list";
+      if (/\b(export|dump)\b/.test(lower)) return "memory_export";
+      if (/\b(garbage|cleanup)\b/.test(lower)) return "memory_gc";
       if (/\b(status|health|stats|info)\b/.test(lower)) return "memory_status";
     }
   }
@@ -149,6 +260,7 @@ export function resolveSkill(parts) {
     if (part.kind === "data" && part.data) {
       if (part.data.content) return "memory_store";
       if (part.data.query) return "memory_search";
+      if (part.data.id) return "memory_get";
     }
   }
 
@@ -203,6 +315,24 @@ async function handleMessageSend(engine, taskStore, params) {
         break;
       case "memory_status":
         artifact = handleMemoryStatus(engine);
+        break;
+      case "memory_delete":
+        artifact = await handleMemoryDelete(engine, message.parts);
+        break;
+      case "memory_get":
+        artifact = await handleMemoryGet(engine, message.parts);
+        break;
+      case "memory_list":
+        artifact = handleMemoryList(engine, message.parts);
+        break;
+      case "memory_export":
+        artifact = handleMemoryExport(engine);
+        break;
+      case "memory_gc":
+        artifact = await handleMemoryGc(engine);
+        break;
+      case "memory_health":
+        artifact = await handleMemoryHealth(engine);
         break;
       default:
         task.status = { state: "failed", timestamp: new Date().toISOString() };
