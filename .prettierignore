@@ -4,3 +4,5 @@ package-lock.json
 *.rs
 *.toml
 Cargo.lock
+crates/shabti-napi/index.d.ts
+crates/shabti-napi/index.js
