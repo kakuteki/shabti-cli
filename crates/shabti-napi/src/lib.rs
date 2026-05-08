@@ -130,9 +130,8 @@ pub struct NapiListOptions {
 pub struct NapiStatus {
     pub entry_count: u32,
     pub tier: String,
-    pub qdrant_url: String,
-    pub data_dir: String,
     pub model_id: String,
+    // qdrant_urlとdata_dirは内部実装の詳細であり公開しない
 }
 
 #[napi(object)]
@@ -424,8 +423,6 @@ impl ShabtiNapi {
         NapiStatus {
             entry_count: count as u32,
             tier: format!("{:?}", gate.tier),
-            qdrant_url: self.qdrant_url.clone(),
-            data_dir: self.data_dir.to_string_lossy().to_string(),
             model_id: self.engine.current_model_id().to_string(),
         }
     }

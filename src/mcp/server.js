@@ -226,7 +226,6 @@ async function handleToolsCall(id, params) {
               entry_count: status.entryCount,
               tier: status.tier,
               model_id: status.modelId,
-              qdrant_url: status.qdrantUrl,
             },
             null,
             2,
