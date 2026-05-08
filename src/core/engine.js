@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
+import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from "fs";
 import { createRequire } from "module";
 import { homedir } from "os";
 import { join } from "path";
@@ -42,7 +42,9 @@ export function loadConfig() {
 
 export function saveConfig(config) {
   mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), { mode: 0o600 });
+  const tmpPath = CONFIG_PATH + ".tmp";
+  writeFileSync(tmpPath, JSON.stringify(config, null, 2), { mode: 0o600 });
+  renameSync(tmpPath, CONFIG_PATH);
 }
 
 export function createEngine(configOverrides = {}) {

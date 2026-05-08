@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::fs;
 use std::path::Path;
 
 use petgraph::graph::{DiGraph, EdgeIndex, NodeIndex};
@@ -171,8 +172,15 @@ impl MemoryGraph {
 
     /// Save graph to a file.
     pub fn save<P: AsRef<Path>>(&self, path: P) -> ShabtiResult<()> {
+        let path = path.as_ref();
         let json = self.to_json()?;
-        std::fs::write(path, json).map_err(ShabtiError::Io)
+
+        // 一時ファイルに書いてからアトミックにリネーム
+        let tmp_path = path.with_extension("tmp");
+        fs::write(&tmp_path, &json).map_err(ShabtiError::Io)?;
+        fs::rename(&tmp_path, path).map_err(ShabtiError::Io)?;
+
+        Ok(())
     }
 
     /// Load graph from a file. Returns empty graph if file doesn't exist.
