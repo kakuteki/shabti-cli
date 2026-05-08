@@ -175,7 +175,6 @@ pub struct ShabtiNapi {
     _runtime: Arc<Runtime>,
     data_dir: PathBuf,
     snapshots_dir: PathBuf,
-    qdrant_url: String,
 }
 
 #[napi]
@@ -184,7 +183,6 @@ impl ShabtiNapi {
     pub fn new(config: NapiEngineConfig) -> Result<Self> {
         let data_dir = PathBuf::from(&config.data_dir);
         let snapshots_dir = data_dir.join("snapshots");
-        let qdrant_url = config.qdrant_url.clone();
 
         let runtime = Arc::new(
             Runtime::new().map_err(|e| Error::from_reason(format!("tokio runtime: {e}")))?,
@@ -208,7 +206,6 @@ impl ShabtiNapi {
             _runtime: runtime,
             data_dir,
             snapshots_dir,
-            qdrant_url,
         })
     }
 
