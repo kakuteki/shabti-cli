@@ -422,7 +422,7 @@ impl ShabtiNapi {
         let gate = self.engine.feature_gate();
 
         NapiStatus {
-            entry_count: count as u32,
+            entry_count: u32::try_from(count).unwrap_or(u32::MAX),
             tier: format!("{:?}", gate.tier),
             qdrant_url: self.qdrant_url.clone(),
             data_dir: self.data_dir.to_string_lossy().to_string(),
