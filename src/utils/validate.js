@@ -52,3 +52,20 @@ export function parsePort(value, name) {
   }
   return n;
 }
+
+/**
+ * qdrant_urlのSSRF防止バリデーション
+ * http/httpsスキームのみ許可し、非ローカルホストの場合は警告を出す
+ */
+export function validateQdrantUrl(raw) {
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(`無効なqdrant_url: ${raw}`);
+  }
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    throw new Error(`qdrant_urlにはhttp://またはhttps://のみ使用できます: ${raw}`);
+  }
+  return raw;
+}

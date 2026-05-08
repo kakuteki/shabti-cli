@@ -2,6 +2,7 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import { createRequire } from "module";
 import { homedir } from "os";
 import { join } from "path";
+import { validateQdrantUrl } from "../utils/validate.js";
 
 const require = createRequire(import.meta.url);
 
@@ -17,7 +18,9 @@ const DEFAULT_CONFIG = {
 /** Env var overrides (highest priority). */
 function envOverrides() {
   const o = {};
-  if (process.env.SHABTI_QDRANT_URL) o.qdrant_url = process.env.SHABTI_QDRANT_URL;
+  if (process.env.SHABTI_QDRANT_URL) {
+    o.qdrant_url = validateQdrantUrl(process.env.SHABTI_QDRANT_URL);
+  }
   return o;
 }
 
@@ -25,7 +28,11 @@ export function loadConfig() {
   let config = DEFAULT_CONFIG;
   if (existsSync(CONFIG_PATH)) {
     try {
-      config = { ...config, ...JSON.parse(readFileSync(CONFIG_PATH, "utf8")) };
+      const saved = JSON.parse(readFileSync(CONFIG_PATH, "utf8"));
+      if (saved.qdrant_url !== undefined) {
+        saved.qdrant_url = validateQdrantUrl(saved.qdrant_url);
+      }
+      config = { ...config, ...saved };
     } catch (_) {
       // keep defaults
     }
