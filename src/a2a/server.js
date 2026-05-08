@@ -244,15 +244,17 @@ export function resolveSkill(parts) {
   }
 
   // テキストマッチは読み取り専用操作のみに制限
+  // DESTRUCTIVE_SKILLSに含まれるスキルはテキストマッチから除外する
   for (const part of parts) {
     if (part.kind === "text" && part.text) {
       const lower = part.text.toLowerCase();
-      if (/\b(store|save|remember)\b/.test(lower)) return "memory_store";
-      if (/\b(search|find|recall|query)\b/.test(lower)) return "memory_search";
-      if (/\b(list|show|all)\b/.test(lower)) return "memory_list";
-      if (/\b(get|fetch|retrieve)\b/.test(lower)) return "memory_get";
-      if (/\b(status|health|stats|info)\b/.test(lower)) return "memory_status";
-      // delete/gc/export はテキストマッチから除外（明示的指定のみ）
+      let candidate = null;
+      if (/\b(store|save|remember)\b/.test(lower)) candidate = "memory_store";
+      else if (/\b(search|find|recall|query)\b/.test(lower)) candidate = "memory_search";
+      else if (/\b(list|show|all)\b/.test(lower)) candidate = "memory_list";
+      else if (/\b(get|fetch|retrieve)\b/.test(lower)) candidate = "memory_get";
+      else if (/\b(status|health|stats|info)\b/.test(lower)) candidate = "memory_status";
+      if (candidate !== null && !DESTRUCTIVE_SKILLS.has(candidate)) return candidate;
     }
   }
 
