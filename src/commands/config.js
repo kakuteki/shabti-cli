@@ -5,6 +5,34 @@ import { validateQdrantUrl } from "../utils/validate.js";
 
 const ALLOWED_KEYS = Object.keys(DEFAULT_CONFIG);
 
+// キーごとのバリデーター
+const CONFIG_VALIDATORS = {
+  qdrant_url: (value) => {
+    try {
+      const url = new URL(value);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        throw new Error("http://またはhttps://のみ使用できます");
+      }
+    } catch (e) {
+      throw new Error(`qdrant_urlが無効です: ${e.message}`, { cause: e });
+    }
+  },
+  data_dir: (value) => {
+    const { resolve } = require("path");
+    const abs = resolve(value);
+    // 危険なシステムパスを拒否
+    const dangerousPaths = ["/etc", "/usr", "/bin", "/sbin", "/sys", "/proc", "/dev"];
+    if (dangerousPaths.some((p) => abs.startsWith(p))) {
+      throw new Error(`data_dirにシステムパスは指定できません: ${abs}`);
+    }
+  },
+  collection_name: (value) => {
+    if (!/^[a-zA-Z0-9_-]+$/.test(value) || value.length > 256) {
+      throw new Error("collection_nameは英数字、ハイフン、アンダースコアのみ使用できます");
+    }
+  },
+};
+
 export function registerConfig(program) {
   const cmd = program.command("config").description("Manage shabti configuration");
 
@@ -38,6 +66,15 @@ export function registerConfig(program) {
         console.log(`  Allowed keys: ${ALLOWED_KEYS.join(", ")}`);
         process.exitCode = 1;
         return;
+      }
+
+      if (CONFIG_VALIDATORS[key]) {
+        try {
+          CONFIG_VALIDATORS[key](value);
+        } catch (e) {
+          error(e.message);
+          return;
+        }
       }
 
       const config = loadConfig();
