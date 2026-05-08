@@ -48,8 +48,12 @@ export function handleSlashCommand(cmd, args, session, rl, engine = null) {
 
     case "/model":
       if (args) {
-        session.setModel(args);
-        success(`Model switched to ${chalk.cyan(args)}`);
+        try {
+          session.setModel(args);
+          success(`Model switched to ${chalk.cyan(args)}`);
+        } catch (err) {
+          error(err.message);
+        }
       } else {
         info(`Current model: ${chalk.cyan(session.getModel())}`);
       }

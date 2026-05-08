@@ -6,6 +6,10 @@ import { error } from "../utils/style.js";
 const DEFAULT_SYSTEM_PROMPT =
   "You are Shabti, a helpful assistant accessed via CLI. Be concise and direct.";
 
+// 既知の有効なOpenAIモデル名のパターン
+const ALLOWED_MODEL_PATTERN = /^(gpt-[34][- .\w]+|o[12][\w-]*)$/;
+const MAX_HISTORY_TURNS = 50; // 最大50ターン
+
 export class ChatSession {
   #client;
   #messages;
@@ -49,7 +53,20 @@ export class ChatSession {
   }
 
   setModel(model) {
+    if (!ALLOWED_MODEL_PATTERN.test(model)) {
+      throw new Error(`無効なモデル名: ${model}`);
+    }
     this.#model = model;
+  }
+
+  #trimHistory() {
+    // システムメッセージは保持、ユーザー/アシスタントのペアを最新N件に制限
+    const systemMessages = this.#messages.filter((m) => m.role === "system");
+    const conversationMessages = this.#messages.filter((m) => m.role !== "system");
+
+    if (conversationMessages.length > MAX_HISTORY_TURNS * 2) {
+      this.#messages = [...systemMessages, ...conversationMessages.slice(-MAX_HISTORY_TURNS * 2)];
+    }
   }
 
   getModel() {
@@ -84,6 +101,7 @@ export class ChatSession {
         }
 
         this.#messages.push({ role: "user", content: trimmed });
+        this.#trimHistory();
 
         try {
           process.stdout.write(chalk.cyan("shabti: "));
