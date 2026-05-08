@@ -39,8 +39,7 @@ export class TaskStore {
   }
 
   #evictOldest() {
-    const oldest = [...this.#tasks.entries()]
-      .sort(([, a], [, b]) => a.createdAt - b.createdAt)[0];
+    const oldest = [...this.#tasks.entries()].sort(([, a], [, b]) => a.createdAt - b.createdAt)[0];
     if (oldest) this.#tasks.delete(oldest[0]);
   }
 
