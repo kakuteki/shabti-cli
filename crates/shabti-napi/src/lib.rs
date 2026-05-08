@@ -222,9 +222,9 @@ impl ShabtiNapi {
         options: Option<NapiStoreOptions>,
     ) -> Result<NapiStoreResult> {
         if content.len() > MAX_CONTENT_CHARS {
-            return Err(Error::from_reason(
-                format!("コンテンツサイズが上限(1MB)を超えています")
-            ));
+            return Err(Error::from_reason(format!(
+                "コンテンツサイズが上限(1MB)を超えています"
+            )));
         }
         let opts = options.unwrap_or_default();
         let store_opts = StoreOptions {
