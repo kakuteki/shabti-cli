@@ -10,8 +10,13 @@ import { normalizeText } from "../utils/normalize.js";
 // ============================================================
 
 export class TaskStore {
-  constructor() {
-    this.tasks = new Map();
+  #tasks = new Map();
+  #maxTasks;
+  #ttlMs;
+
+  constructor({ maxTasks = 1000, ttlMs = 30 * 60 * 1000 } = {}) {
+    this.#maxTasks = maxTasks;
+    this.#ttlMs = ttlMs;
   }
 
   create(contextId) {
@@ -22,21 +27,45 @@ export class TaskStore {
       status: { state: "submitted", timestamp: new Date().toISOString() },
       artifacts: [],
       history: [],
+      createdAt: Date.now(),
     };
-    this.tasks.set(task.id, task);
+    this.#tasks.set(task.id, task);
+
+    if (this.#tasks.size > this.#maxTasks) {
+      this.#evictOldest();
+    }
+
     return task;
   }
 
+  #evictOldest() {
+    const oldest = [...this.#tasks.entries()]
+      .sort(([, a], [, b]) => a.createdAt - b.createdAt)[0];
+    if (oldest) this.#tasks.delete(oldest[0]);
+  }
+
+  cleanup() {
+    const now = Date.now();
+    for (const [id, task] of this.#tasks) {
+      if (
+        now - task.createdAt > this.#ttlMs &&
+        ["completed", "canceled", "failed"].includes(task.status.state)
+      ) {
+        this.#tasks.delete(id);
+      }
+    }
+  }
+
   get(id) {
-    return this.tasks.get(id) || null;
+    return this.#tasks.get(id) || null;
   }
 
   set(id, task) {
-    this.tasks.set(id, task);
+    this.#tasks.set(id, task);
   }
 
   clear() {
-    this.tasks.clear();
+    this.#tasks.clear();
   }
 }
 
@@ -434,6 +463,8 @@ export function startA2AServer(port = 3000) {
   const agentCard = buildAgentCard(baseUrl);
   const taskStore = new TaskStore();
 
+  const cleanupInterval = setInterval(() => taskStore.cleanup(), 5 * 60 * 1000);
+
   const server = createServer(async (req, res) => {
     // CORS headers
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -494,6 +525,8 @@ export function startA2AServer(port = 3000) {
     res.writeHead(404);
     res.end("Not Found");
   });
+
+  server.on("close", () => clearInterval(cleanupInterval));
 
   server.listen(port, "127.0.0.1", () => {
     console.log(`\n  Shabti A2A server listening on ${baseUrl}`);
