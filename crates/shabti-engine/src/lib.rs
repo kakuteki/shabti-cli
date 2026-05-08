@@ -231,9 +231,7 @@ impl ShabtiEngine {
                 // Already committed or being processed by another task — skip.
                 // Use committed_id to distinguish the two cases without
                 // accidentally inserting into the dedup state.
-                let existing_id = dedup
-                    .committed_id(&content_hash)
-                    .unwrap_or(Uuid::nil());
+                let existing_id = dedup.committed_id(&content_hash).unwrap_or(Uuid::nil());
                 return Ok(StoreResult::Skipped { existing_id });
             }
             // Reserve the slot so concurrent tasks see this hash as in-flight.
