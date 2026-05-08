@@ -217,20 +217,30 @@ impl ShabtiEngine {
             validate_namespace(ns)?;
         }
 
-        // Check dedup first (single lock acquisition to avoid deadlock)
+        // TOCTOU fix: use a single lock acquisition to check for existing or
+        // in-flight entries and atomically reserve the slot via mark_pending.
+        // This prevents two concurrent tasks from both passing the initial
+        // `contains` check and then both writing the same content.
         let content_hash = MemoryEntry::content_hash_of(content);
         {
             let mut dedup = self
                 .dedup
                 .lock()
                 .map_err(|e| ShabtiError::Storage(e.to_string()))?;
-            if dedup.contains(&content_hash) {
-                let result = dedup.check_and_insert(&content_hash, Uuid::new_v4());
-                return Ok(result);
+            if dedup.is_known(&content_hash) {
+                // Already committed or being processed by another task — skip.
+                // Use committed_id to distinguish the two cases without
+                // accidentally inserting into the dedup state.
+                let existing_id = dedup
+                    .committed_id(&content_hash)
+                    .unwrap_or(Uuid::nil());
+                return Ok(StoreResult::Skipped { existing_id });
             }
+            // Reserve the slot so concurrent tasks see this hash as in-flight.
+            dedup.mark_pending(&content_hash);
         }
 
-        // Generate embedding
+        // Generate embedding (lock not held — expensive operation)
         let embedding = self.embedding.embed(content)?;
 
         // Build entry
@@ -266,12 +276,15 @@ impl ShabtiEngine {
         let entry = builder.build();
         let id = entry.id;
 
-        // Register in dedup
+        // Commit to dedup: clear the pending reservation and insert the final
+        // mapping in a single lock acquisition so no window exists between the
+        // two states.
         {
             let mut dedup = self
                 .dedup
                 .lock()
                 .map_err(|e| ShabtiError::Storage(e.to_string()))?;
+            dedup.clear_pending(&entry.content_hash);
             dedup.check_and_insert(&entry.content_hash, id);
         }
 

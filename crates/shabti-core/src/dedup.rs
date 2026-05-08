@@ -11,6 +11,8 @@ pub enum StoreResult {
 pub struct DedupChecker {
     hashes: HashSet<String>,
     hash_to_id: HashMap<String, Uuid>,
+    /// Hashes currently being processed (reserved to prevent TOCTOU races).
+    pending: HashSet<String>,
 }
 
 impl DedupChecker {
@@ -18,6 +20,7 @@ impl DedupChecker {
         Self {
             hashes: HashSet::new(),
             hash_to_id: HashMap::new(),
+            pending: HashSet::new(),
         }
     }
 
@@ -32,6 +35,34 @@ impl DedupChecker {
 
     pub fn contains(&self, content_hash: &str) -> bool {
         self.hashes.contains(content_hash)
+    }
+
+    /// Returns true if the hash is already committed **or** is currently being
+    /// processed by another task (i.e. marked as pending).  Callers should use
+    /// this instead of `contains` when deciding whether to proceed with an
+    /// expensive operation such as embedding generation, so that a concurrent
+    /// task that has already reserved the slot is visible.
+    pub fn is_known(&self, content_hash: &str) -> bool {
+        self.hashes.contains(content_hash) || self.pending.contains(content_hash)
+    }
+
+    /// Return the committed ID for a hash if it exists, or `None` if the hash
+    /// is unknown or only pending.  Used together with `is_known` to
+    /// distinguish the "already committed" case from the "in-flight" case.
+    pub fn committed_id(&self, content_hash: &str) -> Option<Uuid> {
+        self.hash_to_id.get(content_hash).copied()
+    }
+
+    /// Reserve `content_hash` as in-flight so that concurrent tasks see it via
+    /// `is_known` and skip the duplicate work.  Must be paired with a call to
+    /// `clear_pending` once the entry has been committed (or on failure).
+    pub fn mark_pending(&mut self, content_hash: &str) {
+        self.pending.insert(content_hash.to_string());
+    }
+
+    /// Remove the in-flight reservation set by `mark_pending`.
+    pub fn clear_pending(&mut self, content_hash: &str) {
+        self.pending.remove(content_hash);
     }
 
     pub fn len(&self) -> usize {
