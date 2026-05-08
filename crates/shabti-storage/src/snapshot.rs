@@ -19,11 +19,37 @@ pub struct Snapshot {
     pub snapshot_dir: PathBuf,
 }
 
+/// Returns true if the given path is a symbolic link.
+///
+/// Uses `symlink_metadata` so the check itself does not follow any link.
+fn is_symlink(path: &Path) -> bool {
+    fs::symlink_metadata(path)
+        .map(|m| m.file_type().is_symlink())
+        .unwrap_or(false)
+}
+
+/// Verify that `path` is strictly contained within `base` after canonicalising.
+///
+/// This prevents path-traversal attacks where a crafted file name (e.g. `../secret`)
+/// could escape the intended directory boundary.
+fn assert_within_base(path: &Path, base: &Path) -> ShabtiResult<()> {
+    let canon_path = path.canonicalize().map_err(ShabtiError::Io)?;
+    let canon_base = base.canonicalize().map_err(ShabtiError::Io)?;
+    if !canon_path.starts_with(&canon_base) {
+        return Err(ShabtiError::Storage(format!(
+            "パスがベースディレクトリ外にあります: {:?} (base: {:?})",
+            path, base
+        )));
+    }
+    Ok(())
+}
+
 /// Create a snapshot by copying storage files to a new subdirectory.
 ///
 /// Layout: `<snapshots_dir>/<uuid>/shabti.log`, `events.jsonl`, `graph.json`
 ///
 /// Missing source files are silently skipped.
+/// Symbolic links are rejected to prevent TOCTOU attacks.
 pub fn create_snapshot(data_dir: &Path, snapshots_dir: &Path) -> ShabtiResult<Snapshot> {
     let id = Uuid::new_v4();
     let now = SystemTime::now()
@@ -38,7 +64,20 @@ pub fn create_snapshot(data_dir: &Path, snapshots_dir: &Path) -> ShabtiResult<Sn
     for &name in STORAGE_FILES {
         let src = data_dir.join(name);
         if src.exists() {
-            fs::copy(&src, snap_path.join(name)).map_err(ShabtiError::Io)?;
+            // Reject symbolic links before copying to prevent TOCTOU attacks
+            if is_symlink(&src) {
+                return Err(ShabtiError::Storage(format!(
+                    "シンボリックリンクはスナップショット操作に使用できません: {:?}",
+                    src
+                )));
+            }
+
+            let dst = snap_path.join(name);
+
+            // Verify source is within the expected data directory
+            assert_within_base(&src, data_dir)?;
+
+            fs::copy(&src, &dst).map_err(ShabtiError::Io)?;
         }
     }
 
@@ -56,13 +95,27 @@ pub fn create_snapshot(data_dir: &Path, snapshots_dir: &Path) -> ShabtiResult<Sn
 /// Restore a snapshot by copying its files back into the data directory.
 ///
 /// Only files that exist in the snapshot are copied.
+/// Symbolic links are rejected to prevent TOCTOU attacks.
 pub fn restore_snapshot(snapshot: &Snapshot, data_dir: &Path) -> ShabtiResult<()> {
     fs::create_dir_all(data_dir).map_err(ShabtiError::Io)?;
 
     for &name in STORAGE_FILES {
         let src = snapshot.snapshot_dir.join(name);
         if src.exists() {
-            fs::copy(&src, data_dir.join(name)).map_err(ShabtiError::Io)?;
+            // Reject symbolic links before copying to prevent TOCTOU attacks
+            if is_symlink(&src) {
+                return Err(ShabtiError::Storage(format!(
+                    "シンボリックリンクはスナップショット操作に使用できません: {:?}",
+                    src
+                )));
+            }
+
+            let dst = data_dir.join(name);
+
+            // Verify source is within the expected snapshot directory
+            assert_within_base(&src, &snapshot.snapshot_dir)?;
+
+            fs::copy(&src, &dst).map_err(ShabtiError::Io)?;
         }
     }
 
