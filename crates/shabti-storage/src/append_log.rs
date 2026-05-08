@@ -12,6 +12,7 @@ use uuid::Uuid;
 ///   [4 bytes] crc32   (u32 LE, over data bytes)
 ///   [data_len bytes] JSON-encoded MemoryEntry
 const HEADER_SIZE: usize = 8; // 4 (len) + 4 (crc)
+const MAX_ENTRY_SIZE: usize = 10 * 1024 * 1024; // 10MB上限
 
 pub struct AppendLog {
     file: File,
@@ -54,6 +55,14 @@ impl AppendLog {
     pub fn append(&mut self, entry: &MemoryEntry) -> ShabtiResult<()> {
         let data =
             serde_json::to_vec(entry).map_err(|e| ShabtiError::Serialization(e.to_string()))?;
+
+        if data.len() > MAX_ENTRY_SIZE {
+            return Err(ShabtiError::Storage(format!(
+                "エントリサイズが上限(10MB)を超えています: {}バイト",
+                data.len()
+            )));
+        }
+
         let data_len = u32::try_from(data.len())
             .map_err(|_| ShabtiError::Storage("エントリのサイズが4GBを超えています".into()))?;
         let crc = crc32fast::hash(&data);
@@ -118,6 +127,11 @@ impl AppendLog {
 
             let data_len = u32::from_le_bytes([header[0], header[1], header[2], header[3]]);
             let stored_crc = u32::from_le_bytes([header[4], header[5], header[6], header[7]]);
+
+            // 異常に大きなレコードサイズはOOM防止のためスキップ
+            if data_len as usize > MAX_ENTRY_SIZE {
+                break;
+            }
 
             // Check if we have enough data
             if pos + HEADER_SIZE as u64 + data_len as u64 > file_len {
