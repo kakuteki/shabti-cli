@@ -28,6 +28,12 @@ export function registerSnapshot(program) {
     .argument("<id>", "Snapshot ID to restore")
     .action(async (id) => {
       try {
+        // UUIDフォーマット検証
+        const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!UUID_REGEX.test(id)) {
+          error(`無効なスナップショットID: ${id}（UUID形式で指定してください）`);
+          return;
+        }
         const engine = createEngine();
         engine.snapshotRestore(id);
         success(`Restored from snapshot: ${id}`);
