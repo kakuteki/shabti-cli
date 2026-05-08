@@ -13,7 +13,7 @@ const CONFIG_VALIDATORS = {
         throw new Error("http://またはhttps://のみ使用できます");
       }
     } catch (e) {
-      throw new Error(`qdrant_urlが無効です: ${e.message}`);
+      throw new Error(`qdrant_urlが無効です: ${e.message}`, { cause: e });
     }
   },
   data_dir: (value) => {
@@ -21,12 +21,12 @@ const CONFIG_VALIDATORS = {
     const abs = resolve(value);
     // 危険なシステムパスを拒否
     const dangerousPaths = ["/etc", "/usr", "/bin", "/sbin", "/sys", "/proc", "/dev"];
-    if (dangerousPaths.some(p => abs.startsWith(p))) {
+    if (dangerousPaths.some((p) => abs.startsWith(p))) {
       throw new Error(`data_dirにシステムパスは指定できません: ${abs}`);
     }
   },
   collection_name: (value) => {
-    if (!/^[a-zA-Z0-9_\-]+$/.test(value) || value.length > 256) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(value) || value.length > 256) {
       throw new Error("collection_nameは英数字、ハイフン、アンダースコアのみ使用できます");
     }
   },
