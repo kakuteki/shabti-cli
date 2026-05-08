@@ -61,14 +61,11 @@ export class ChatSession {
 
   #trimHistory() {
     // システムメッセージは保持、ユーザー/アシスタントのペアを最新N件に制限
-    const systemMessages = this.#messages.filter(m => m.role === "system");
-    const conversationMessages = this.#messages.filter(m => m.role !== "system");
+    const systemMessages = this.#messages.filter((m) => m.role === "system");
+    const conversationMessages = this.#messages.filter((m) => m.role !== "system");
 
     if (conversationMessages.length > MAX_HISTORY_TURNS * 2) {
-      this.#messages = [
-        ...systemMessages,
-        ...conversationMessages.slice(-MAX_HISTORY_TURNS * 2),
-      ];
+      this.#messages = [...systemMessages, ...conversationMessages.slice(-MAX_HISTORY_TURNS * 2)];
     }
   }
 
