@@ -105,9 +105,9 @@ describe("resolveSkill", () => {
     expect(resolveSkill([{ kind: "text", text: "hello world" }])).toBeNull();
   });
 
-  it("resolves delete from text keywords", () => {
-    expect(resolveSkill([{ kind: "text", text: "Delete that entry" }])).toBe("memory_delete");
-    expect(resolveSkill([{ kind: "text", text: "Remove old memories" }])).toBe("memory_delete");
+  it("blocks delete from text keywords (destructive operation)", () => {
+    expect(resolveSkill([{ kind: "text", text: "Delete that entry" }])).toBeNull();
+    expect(resolveSkill([{ kind: "text", text: "Remove old memories" }])).toBeNull();
   });
 
   it("resolves get from text keywords", () => {
@@ -119,14 +119,14 @@ describe("resolveSkill", () => {
     expect(resolveSkill([{ kind: "text", text: "List all memories" }])).toBe("memory_list");
   });
 
-  it("resolves export from text keywords", () => {
-    expect(resolveSkill([{ kind: "text", text: "Export the data" }])).toBe("memory_export");
-    expect(resolveSkill([{ kind: "text", text: "Dump all entries" }])).toBe("memory_export");
+  it("blocks export from text keywords (destructive operation)", () => {
+    expect(resolveSkill([{ kind: "text", text: "Export the data" }])).toBeNull();
+    expect(resolveSkill([{ kind: "text", text: "Dump all entries" }])).toBeNull();
   });
 
-  it("resolves gc from text keywords", () => {
-    expect(resolveSkill([{ kind: "text", text: "Run garbage collect" }])).toBe("memory_gc");
-    expect(resolveSkill([{ kind: "text", text: "Cleanup expired entries" }])).toBe("memory_gc");
+  it("blocks gc from text keywords (destructive operation)", () => {
+    expect(resolveSkill([{ kind: "text", text: "Run garbage collect" }])).toBeNull();
+    expect(resolveSkill([{ kind: "text", text: "Cleanup expired entries" }])).toBeNull();
   });
 
   it("resolves data with id field to memory_get", () => {
