@@ -132,7 +132,8 @@ async function handleRecall(query, engine) {
       console.log(chalk.dim("  No memories found."));
     } else {
       for (const r of results) {
-        console.log(`  ${chalk.yellow(r.score.toFixed(4))}  ${r.content}`);
+        const formatted = `[MEMORY_START id="${r.id}"]\n${r.content}\n[MEMORY_END]`;
+        console.log(`  ${chalk.yellow(r.score.toFixed(4))}  ${formatted}`);
       }
     }
   } catch (err) {

@@ -280,8 +280,10 @@ async function handleToolsCall(id, params) {
       const queryObj = { text: normalizeText(query), limit };
       if (args.namespace) queryObj.namespace = args.namespace;
       const results = await eng.executeQuery(queryObj);
+      const formatMemoryEntry = (entry) =>
+        `[MEMORY_START id="${entry.id}"]\n${entry.content}\n[MEMORY_END]`;
       const formatted = results.map((r) => ({
-        content: r.content,
+        content: formatMemoryEntry(r),
         score: r.score,
         id: r.id,
         namespace: r.namespace,
