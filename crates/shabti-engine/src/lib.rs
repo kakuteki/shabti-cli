@@ -57,6 +57,7 @@ const LINK_DECAY_FACTOR: f32 = 0.7;
 /// Background indexing task types.
 enum IndexTask {
     GenerateLinks(Uuid),
+    Flush(tokio::sync::oneshot::Sender<()>),
     Shutdown,
 }
 
@@ -178,6 +179,11 @@ impl ShabtiEngine {
 
                     // Save graph periodically (on every link generation for now)
                     let _ = g.save(&graph_path);
+                }
+                IndexTask::Flush(tx) => {
+                    // All previously queued tasks have been processed at this point;
+                    // notify the caller that the flush is complete.
+                    let _ = tx.send(());
                 }
                 IndexTask::Shutdown => break,
             }
@@ -480,12 +486,21 @@ impl ShabtiEngine {
     }
 
     /// Flush background tasks — wait for all queued tasks to complete.
+    ///
+    /// Sends a `Flush` sentinel through the worker channel. Because the channel
+    /// is FIFO, the worker will process every previously enqueued task before
+    /// it reaches the sentinel and sends back the completion signal, giving a
+    /// deterministic guarantee instead of an arbitrary sleep.
     pub async fn flush_background(&self) -> ShabtiResult<()> {
-        // Send a dummy through channel and wait for it to be processed
-        // by sending Shutdown then restarting. Instead, use a simpler approach:
-        // just sleep briefly to let tasks process.
-        // For a more robust solution we'd use a barrier, but this suffices for tests.
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.bg_tx
+            .send(IndexTask::Flush(tx))
+            .await
+            .map_err(|_| ShabtiError::Storage("background worker が停止しています".into()))?;
+        tokio::time::timeout(std::time::Duration::from_secs(10), rx)
+            .await
+            .map_err(|_| ShabtiError::Timeout("flush_background がタイムアウトしました".into()))?
+            .ok();
         Ok(())
     }
 
