@@ -19,8 +19,7 @@ impl FastEmbedModel {
         let model_id = format!("{model_type:?}");
         // 初回実行時のみ ~/.cache/fastembed/ にモデルをダウンロードします
         let mut model = TextEmbedding::try_new(
-            InitOptions::new(model_type)
-                .with_show_download_progress(true), // false → true
+            InitOptions::new(model_type).with_show_download_progress(true), // false → true
         )
         .map_err(|e| ShabtiError::Embedding(e.to_string()))?;
 
