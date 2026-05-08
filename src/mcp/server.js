@@ -216,8 +216,6 @@ async function handleToolsCall(id, params) {
       });
     }
     const status = eng.status();
-    // qdrantUrl と dataDir を除外して返す
-    const { qdrantUrl, dataDir, ...safeStatus } = status;
     return respond(id, {
       content: [
         {
@@ -225,9 +223,9 @@ async function handleToolsCall(id, params) {
           text: JSON.stringify(
             {
               status: "ok",
-              entry_count: safeStatus.entryCount,
-              tier: safeStatus.tier,
-              model_id: safeStatus.modelId,
+              entry_count: status.entryCount,
+              tier: status.tier,
+              model_id: status.modelId,
             },
             null,
             2,
