@@ -19,8 +19,6 @@ export function registerStatus(program) {
           console.log();
           console.log(`  ${chalk.cyan("Entries:")}     ${status.entryCount}`);
           console.log(`  ${chalk.cyan("Tier:")}        ${status.tier}`);
-          console.log(`  ${chalk.cyan("Qdrant URL:")}  ${status.qdrantUrl}`);
-          console.log(`  ${chalk.cyan("Data Dir:")}    ${status.dataDir}`);
           console.log(`  ${chalk.cyan("Model:")}      ${status.modelId}`);
           console.log();
         }

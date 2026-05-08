@@ -130,9 +130,8 @@ pub struct NapiListOptions {
 pub struct NapiStatus {
     pub entry_count: u32,
     pub tier: String,
-    pub qdrant_url: String,
-    pub data_dir: String,
     pub model_id: String,
+    // qdrant_urlとdata_dirは内部実装の詳細であり公開しない
 }
 
 #[napi(object)]
@@ -176,7 +175,6 @@ pub struct ShabtiNapi {
     _runtime: Arc<Runtime>,
     data_dir: PathBuf,
     snapshots_dir: PathBuf,
-    qdrant_url: String,
 }
 
 #[napi]
@@ -185,7 +183,6 @@ impl ShabtiNapi {
     pub fn new(config: NapiEngineConfig) -> Result<Self> {
         let data_dir = PathBuf::from(&config.data_dir);
         let snapshots_dir = data_dir.join("snapshots");
-        let qdrant_url = config.qdrant_url.clone();
 
         let runtime = Arc::new(
             Runtime::new().map_err(|e| Error::from_reason(format!("tokio runtime: {e}")))?,
@@ -209,7 +206,6 @@ impl ShabtiNapi {
             _runtime: runtime,
             data_dir,
             snapshots_dir,
-            qdrant_url,
         })
     }
 
@@ -424,8 +420,6 @@ impl ShabtiNapi {
         NapiStatus {
             entry_count: u32::try_from(count).unwrap_or(u32::MAX),
             tier: format!("{:?}", gate.tier),
-            qdrant_url: self.qdrant_url.clone(),
-            data_dir: self.data_dir.to_string_lossy().to_string(),
             model_id: self.engine.current_model_id().to_string(),
         }
     }
