@@ -226,7 +226,6 @@ async function handleToolsCall(id, params) {
               entry_count: status.entryCount,
               tier: status.tier,
               model_id: status.modelId,
-              qdrant_url: status.qdrantUrl,
             },
             null,
             2,
@@ -503,12 +502,17 @@ function handleResourcesRead(id, params) {
 
   if (uri === "shabti://config") {
     const config = loadConfig();
+    // 機密フィールドを除いた安全な設定情報のみ返す
+    const safeConfig = {
+      collection_name: config.collection_name,
+      // qdrant_url, data_dir は公開しない
+    };
     return respond(id, {
       contents: [
         {
           uri,
           mimeType: "application/json",
-          text: JSON.stringify(config),
+          text: JSON.stringify(safeConfig),
         },
       ],
     });
