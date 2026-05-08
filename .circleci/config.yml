@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@7
+  node: circleci/node@7.1.0 # 特定バージョンに固定
 
 jobs:
   lint-and-test:
