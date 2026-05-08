@@ -85,6 +85,12 @@ pub fn list_snapshots(snapshots_dir: &Path) -> ShabtiResult<Vec<Snapshot>> {
             continue;
         }
 
+        // UUID形式でないディレクトリ名はスキップ
+        let dir_name = entry.file_name().to_string_lossy().to_string();
+        if Uuid::parse_str(&dir_name).is_err() {
+            continue;
+        }
+
         let meta_path = path.join(META_FILE);
         if !meta_path.exists() {
             continue;
