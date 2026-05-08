@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { loadConfig, saveConfig, DEFAULT_CONFIG } from "../core/engine.js";
 import { success, error, heading } from "../utils/style.js";
+import { validateQdrantUrl } from "../utils/validate.js";
 
 const ALLOWED_KEYS = Object.keys(DEFAULT_CONFIG);
 
@@ -40,9 +41,19 @@ export function registerConfig(program) {
       }
 
       const config = loadConfig();
-      config[key] = value;
+      let validatedValue = value;
+      if (key === "qdrant_url") {
+        try {
+          validatedValue = validateQdrantUrl(value);
+        } catch (err) {
+          error(err.message);
+          process.exitCode = 1;
+          return;
+        }
+      }
+      config[key] = validatedValue;
       saveConfig(config);
-      success(`${key} = ${value}`);
+      success(`${key} = ${validatedValue}`);
     });
 
   cmd
