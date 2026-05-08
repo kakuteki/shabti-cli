@@ -233,34 +233,26 @@ async function handleMemoryHealth(engine) {
 // ============================================================
 
 export function resolveSkill(parts) {
-  // Check for explicit skill in data parts
+  // 破壊的操作: dataパートの明示的なskill指定のみ受け付ける
+  const DESTRUCTIVE_SKILLS = new Set(["memory_delete", "memory_gc", "memory_export"]);
+
+  // まず明示的なskill指定を探す
   for (const part of parts) {
     if (part.kind === "data" && part.data?.skill) {
       return part.data.skill;
     }
   }
 
-  // Text-based routing
+  // テキストマッチは読み取り専用操作のみに制限
   for (const part of parts) {
     if (part.kind === "text" && part.text) {
       const lower = part.text.toLowerCase();
       if (/\b(store|save|remember)\b/.test(lower)) return "memory_store";
       if (/\b(search|find|recall|query)\b/.test(lower)) return "memory_search";
-      if (/\b(delete|remove)\b/.test(lower)) return "memory_delete";
-      if (/\b(get|retrieve)\b/.test(lower)) return "memory_get";
-      if (/\b(list)\b/.test(lower)) return "memory_list";
-      if (/\b(export|dump)\b/.test(lower)) return "memory_export";
-      if (/\b(garbage|cleanup)\b/.test(lower)) return "memory_gc";
+      if (/\b(list|show|all)\b/.test(lower)) return "memory_list";
+      if (/\b(get|fetch|retrieve)\b/.test(lower)) return "memory_get";
       if (/\b(status|health|stats|info)\b/.test(lower)) return "memory_status";
-    }
-  }
-
-  // Check for structured data that implies a skill
-  for (const part of parts) {
-    if (part.kind === "data" && part.data) {
-      if (part.data.content) return "memory_store";
-      if (part.data.query) return "memory_search";
-      if (part.data.id) return "memory_get";
+      // delete/gc/export はテキストマッチから除外（明示的指定のみ）
     }
   }
 
