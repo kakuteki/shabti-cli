@@ -33,12 +33,8 @@ fn is_symlink(path: &Path) -> bool {
 /// This prevents path-traversal attacks where a crafted file name (e.g. `../secret`)
 /// could escape the intended directory boundary.
 fn assert_within_base(path: &Path, base: &Path) -> ShabtiResult<()> {
-    let canon_path = path
-        .canonicalize()
-        .map_err(ShabtiError::Io)?;
-    let canon_base = base
-        .canonicalize()
-        .map_err(ShabtiError::Io)?;
+    let canon_path = path.canonicalize().map_err(ShabtiError::Io)?;
+    let canon_base = base.canonicalize().map_err(ShabtiError::Io)?;
     if !canon_path.starts_with(&canon_base) {
         return Err(ShabtiError::Storage(format!(
             "パスがベースディレクトリ外にあります: {:?} (base: {:?})",
