@@ -435,14 +435,25 @@ export function startA2AServer(port = 3000) {
   const taskStore = new TaskStore();
 
   const server = createServer(async (req, res) => {
-    // CORS headers
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    // CORS headers — restrict to null (no browser cross-origin access needed for localhost)
+    res.setHeader("Access-Control-Allow-Origin", "null");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     if (req.method === "OPTIONS") {
       res.writeHead(204);
       return res.end();
+    }
+
+    // Bearer Token authentication
+    const a2aToken = process.env.SHABTI_A2A_TOKEN;
+    if (a2aToken) {
+      const authHeader = req.headers["authorization"] || "";
+      if (!authHeader.startsWith("Bearer ") || authHeader.slice(7) !== a2aToken) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
     }
 
     // Agent Card discovery
