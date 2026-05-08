@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 import { createEngine } from "../core/engine.js";
 import { success, error, info, warn } from "../utils/style.js";
 
@@ -11,12 +12,13 @@ export function registerImport(program) {
     .option("--dry-run", "Parse and validate without storing")
     .action(async (file, opts) => {
       try {
-        if (!existsSync(file)) {
-          error(`File not found: ${file}`);
+        const absFile = resolve(file);
+        if (!existsSync(absFile)) {
+          error(`File not found: ${absFile}`);
           process.exitCode = 1;
           return;
         }
-        const raw = readFileSync(file, "utf8");
+        const raw = readFileSync(absFile, "utf8");
         const lines = raw
           .split("\n")
           .map((l) => l.trim())
