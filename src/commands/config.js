@@ -31,6 +31,11 @@ const CONFIG_VALIDATORS = {
       throw new Error("collection_nameは英数字、ハイフン、アンダースコアのみ使用できます");
     }
   },
+  model_id: (value) => {
+    if (value !== "null" && value.length > 200) {
+      throw new Error("model_idが長すぎます");
+    }
+  },
 };
 
 export function registerConfig(program) {
@@ -73,12 +78,13 @@ export function registerConfig(program) {
           CONFIG_VALIDATORS[key](value);
         } catch (e) {
           error(e.message);
+          process.exitCode = 1;
           return;
         }
       }
 
       const config = loadConfig();
-      let validatedValue = value;
+      let validatedValue = value === "null" ? null : value;
       if (key === "qdrant_url") {
         try {
           validatedValue = validateQdrantUrl(value);
