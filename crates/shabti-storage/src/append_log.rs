@@ -30,11 +30,16 @@ impl AppendLog {
             std::fs::create_dir_all(parent)?;
         }
 
-        let file = OpenOptions::new()
-            .create(true)
-            .read(true)
-            .append(true)
-            .open(path)?;
+        let mut options = OpenOptions::new();
+        options.create(true).read(true).append(true);
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+
+        let file = options.open(path)?;
 
         let mut log = Self {
             file,

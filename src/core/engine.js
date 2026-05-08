@@ -34,13 +34,13 @@ export function loadConfig() {
 }
 
 export function saveConfig(config) {
-  mkdirSync(CONFIG_DIR, { recursive: true });
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+  mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), { mode: 0o600 });
 }
 
 export function createEngine(configOverrides = {}) {
   const config = { ...loadConfig(), ...configOverrides };
-  mkdirSync(config.data_dir, { recursive: true });
+  mkdirSync(config.data_dir, { recursive: true, mode: 0o700 });
 
   const { ShabtiEngine } = require("../../native.cjs");
 
