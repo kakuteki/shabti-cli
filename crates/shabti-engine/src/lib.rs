@@ -61,6 +61,27 @@ enum IndexTask {
     Shutdown,
 }
 
+/// Validate a namespace string for safety and format.
+/// Returns an error if the namespace is empty, too long, or contains forbidden patterns.
+fn validate_namespace(ns: &str) -> ShabtiResult<()> {
+    if ns.is_empty() {
+        return Err(ShabtiError::Validation(
+            "namespace must not be empty".to_string(),
+        ));
+    }
+    if ns.len() > 256 {
+        return Err(ShabtiError::Validation(
+            "namespace must not exceed 256 characters".to_string(),
+        ));
+    }
+    if ns.contains("..") || ns.starts_with('/') {
+        return Err(ShabtiError::Validation(
+            "namespace contains invalid characters".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 pub struct ShabtiEngine {
     embedding: Arc<FastEmbedModel>,
     index: Arc<QdrantIndex>,
@@ -191,6 +212,11 @@ impl ShabtiEngine {
     }
 
     pub async fn store(&self, content: &str, options: &StoreOptions) -> ShabtiResult<StoreResult> {
+        // Validate namespace format if provided
+        if let Some(ref ns) = options.namespace {
+            validate_namespace(ns)?;
+        }
+
         // Check dedup first (single lock acquisition to avoid deadlock)
         let content_hash = MemoryEntry::content_hash_of(content);
         {
@@ -317,6 +343,11 @@ impl ShabtiEngine {
         limit: usize,
         namespace: Option<&str>,
     ) -> ShabtiResult<Vec<SearchResult>> {
+        // Validate namespace format if provided
+        if let Some(ns) = namespace {
+            validate_namespace(ns)?;
+        }
+
         let query_embedding = self.embedding.embed(query)?;
 
         let opts = SearchOptions {
@@ -506,6 +537,11 @@ impl ShabtiEngine {
 
     /// Execute a composable query with time decay scoring and optional explanation.
     pub async fn execute_query(&self, query: &Query) -> ShabtiResult<Vec<QueryResult>> {
+        // Validate namespace format if provided
+        if let Some(ref ns) = query.namespace {
+            validate_namespace(ns)?;
+        }
+
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .expect("system time before UNIX epoch")
@@ -625,6 +661,11 @@ impl ShabtiEngine {
         namespace: Option<&str>,
         limit: Option<usize>,
     ) -> ShabtiResult<Vec<MemoryEntry>> {
+        // Validate namespace format if provided
+        if let Some(ns) = namespace {
+            validate_namespace(ns)?;
+        }
+
         let log = self
             .log
             .lock()
