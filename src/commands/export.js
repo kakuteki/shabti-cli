@@ -1,4 +1,5 @@
 import { writeFileSync } from "fs";
+import { resolve } from "path";
 import { createEngine } from "../core/engine.js";
 import { success, error } from "../utils/style.js";
 import { parsePositiveInt } from "../utils/validate.js";
@@ -28,8 +29,9 @@ export function registerExport(program) {
         const output = lines.join("\n");
 
         if (opts.output) {
-          writeFileSync(opts.output, output + (lines.length ? "\n" : ""), "utf8");
-          success(`Exported ${entries.length} entries to ${opts.output}`);
+          const absOutput = resolve(opts.output);
+          writeFileSync(absOutput, output + (lines.length ? "\n" : ""), "utf8");
+          success(`Exported ${entries.length} entries to ${absOutput}`);
         } else {
           if (output) console.log(output);
           // Print summary to stderr so it doesn't pollute piped output
