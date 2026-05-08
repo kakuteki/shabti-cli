@@ -49,7 +49,8 @@ impl AppendLog {
     pub fn append(&mut self, entry: &MemoryEntry) -> ShabtiResult<()> {
         let data =
             serde_json::to_vec(entry).map_err(|e| ShabtiError::Serialization(e.to_string()))?;
-        let data_len = data.len() as u32;
+        let data_len = u32::try_from(data.len())
+            .map_err(|_| ShabtiError::Storage("エントリのサイズが4GBを超えています".into()))?;
         let crc = crc32fast::hash(&data);
 
         let mut buf = Vec::with_capacity(HEADER_SIZE + data.len());
