@@ -8,6 +8,9 @@ use uuid::Uuid;
 
 use shabti_core::error::{ShabtiError, ShabtiResult};
 
+const MAX_GRAPH_NODES: usize = 1_000_000;
+const MAX_GRAPH_EDGES: usize = 10_000_000;
+
 /// Serializable representation of the graph.
 #[derive(Serialize, Deserialize)]
 struct GraphData {
@@ -142,6 +145,19 @@ impl MemoryGraph {
     pub fn from_json(json: &str) -> ShabtiResult<Self> {
         let data: GraphData =
             serde_json::from_str(json).map_err(|e| ShabtiError::Serialization(e.to_string()))?;
+
+        if data.nodes.len() > MAX_GRAPH_NODES {
+            return Err(ShabtiError::Storage(format!(
+                "グラフノード数が上限({})を超えています",
+                MAX_GRAPH_NODES
+            )));
+        }
+        if data.edges.len() > MAX_GRAPH_EDGES {
+            return Err(ShabtiError::Storage(format!(
+                "グラフエッジ数が上限({})を超えています",
+                MAX_GRAPH_EDGES
+            )));
+        }
 
         let mut graph = Self::new();
         for uuid in data.nodes {
