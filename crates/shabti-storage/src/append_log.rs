@@ -13,6 +13,11 @@ use uuid::Uuid;
 ///   [data_len bytes] JSON-encoded MemoryEntry
 const HEADER_SIZE: usize = 8; // 4 (len) + 4 (crc)
 
+// NOTE: CRC32は偶発的なデータ破損の検出に使用しています。
+// CRC32は暗号学的ハッシュではないため、意図的な改ざんを
+// 検出することはできません。改ざん耐性が必要な場合は
+// HMAC-SHA256への移行を検討してください。
+
 pub struct AppendLog {
     file: File,
     /// Maps entry UUID → byte offset in the file

@@ -169,6 +169,8 @@ pub fn detect_contradiction_napi(text_a: String, text_b: String) -> NapiContradi
 // ShabtiNapi — main binding class
 // ============================================================
 
+const MAX_CONTENT_CHARS: usize = 1_048_576; // 1MB
+
 #[napi(js_name = "ShabtiEngine")]
 pub struct ShabtiNapi {
     engine: Arc<ShabtiEngine>,
@@ -219,6 +221,11 @@ impl ShabtiNapi {
         content: String,
         options: Option<NapiStoreOptions>,
     ) -> Result<NapiStoreResult> {
+        if content.len() > MAX_CONTENT_CHARS {
+            return Err(Error::from_reason(
+                format!("コンテンツサイズが上限(1MB)を超えています")
+            ));
+        }
         let opts = options.unwrap_or_default();
         let store_opts = StoreOptions {
             namespace: opts.namespace,
