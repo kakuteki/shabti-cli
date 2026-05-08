@@ -403,10 +403,19 @@ function handleTasksCancel(taskStore, params) {
 // HTTP Server
 // ============================================================
 
-function readBody(req) {
+function readBody(req, maxBytes = 1_048_576) {
+  // デフォルト1MB上限
   return new Promise((resolve, reject) => {
     const chunks = [];
-    req.on("data", (c) => chunks.push(c));
+    let total = 0;
+    req.on("data", (c) => {
+      total += c.length;
+      if (total > maxBytes) {
+        req.destroy();
+        return reject(new Error("リクエストボディが大きすぎます"));
+      }
+      chunks.push(c);
+    });
     req.on("end", () => resolve(Buffer.concat(chunks).toString()));
     req.on("error", reject);
   });

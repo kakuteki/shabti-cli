@@ -549,7 +549,10 @@ async function handleRequest(line) {
 const rl = createInterface({ input: process.stdin, terminal: false });
 rl.on("line", (line) => {
   const trimmed = line.trim();
-  if (trimmed) handleRequest(trimmed);
+  if (trimmed && trimmed.length <= 10_000_000) {
+    // 10MB上限
+    handleRequest(trimmed);
+  }
 });
 
 async function shutdown() {
