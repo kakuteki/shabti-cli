@@ -403,7 +403,8 @@ function handleTasksCancel(taskStore, params) {
 // HTTP Server
 // ============================================================
 
-function readBody(req, maxBytes = 1_048_576) {  // デフォルト1MB上限
+function readBody(req, maxBytes = 1_048_576) {
+  // デフォルト1MB上限
   return new Promise((resolve, reject) => {
     const chunks = [];
     let total = 0;
