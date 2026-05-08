@@ -26,15 +26,15 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@b3b07b3e5a6ae72a46a5e30a1b9a8ef07c3b3278  # 2025年1月版
         with:
           targets: ${{ matrix.target }}
 
       - name: Cache cargo registry & build
-        uses: actions/cache@v5
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf  # v4.2.2
         with:
           path: |
             ~/.cargo/registry
@@ -44,7 +44,7 @@ jobs:
           restore-keys: ${{ runner.os }}-napi-${{ matrix.target }}-
 
       - name: Use Node.js 22
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # v4.1.0
         with:
           node-version: 22
           cache: npm
@@ -55,7 +55,7 @@ jobs:
         run: npx napi build --platform --target ${{ matrix.target }} -p shabti-napi --js native.cjs --dts native.d.ts -o .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1  # v4.6.1
         with:
           name: bindings-${{ matrix.target }}
           path: |
