@@ -13,6 +13,7 @@ const DEFAULT_CONFIG = {
   qdrant_url: "http://localhost:6334",
   data_dir: join(CONFIG_DIR, "data"),
   collection_name: "shabti",
+  model_id: null, // null = デフォルトモデルを使用
 };
 
 /** Env var overrides (highest priority). */
