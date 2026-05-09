@@ -20,6 +20,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # 2025年1月版
         with:
+          toolchain: stable
           components: clippy, rustfmt
 
       - name: Cache cargo registry & build
@@ -54,6 +55,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # 2025年1月版
+        with:
+          toolchain: stable
 
       - name: Cache cargo registry & build
         uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
