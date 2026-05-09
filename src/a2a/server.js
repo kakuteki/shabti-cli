@@ -245,23 +245,25 @@ export function resolveSkill(parts) {
     if (part.kind === "data" && part.data) {
       if (part.data.content !== undefined) return "memory_store";
       if (part.data.query !== undefined) return "memory_search";
+      if (part.data.id !== undefined) return "memory_get";
     }
   }
 
   // テキストマッチは読み取り専用操作のみに制限
-  // DESTRUCTIVE_SKILLSに含まれるスキルはテキストマッチから除外する
+  // 破壊的スキルを先に評価してブロックすることで"dump all entries"等が
+  // 誤ってmemory_listにマッチするのを防ぐ
   for (const part of parts) {
     if (part.kind === "text" && part.text) {
       const lower = part.text.toLowerCase();
       let candidate = null;
       if (/\b(store|save|remember)\b/.test(lower)) candidate = "memory_store";
       else if (/\b(search|find|recall|query)\b/.test(lower)) candidate = "memory_search";
-      else if (/\b(status|health|stats|info)\b/.test(lower)) candidate = "memory_status";
-      else if (/\b(list|show|all)\b/.test(lower)) candidate = "memory_list";
-      else if (/\b(get|fetch|retrieve)\b/.test(lower)) candidate = "memory_get";
       else if (/\b(delete|remove)\b/.test(lower)) candidate = "memory_delete";
       else if (/\b(export|dump)\b/.test(lower)) candidate = "memory_export";
       else if (/\b(gc|garbage|cleanup|clean)\b/.test(lower)) candidate = "memory_gc";
+      else if (/\b(status|health|stats|info)\b/.test(lower)) candidate = "memory_status";
+      else if (/\b(list|show)\b/.test(lower)) candidate = "memory_list";
+      else if (/\b(get|fetch|retrieve)\b/.test(lower)) candidate = "memory_get";
       if (candidate !== null && !DESTRUCTIVE_SKILLS.has(candidate)) return candidate;
     }
   }
