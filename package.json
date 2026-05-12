@@ -74,7 +74,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.1",
-    "@commitlint/config-conventional": "^20.4.1",
+    "@commitlint/config-conventional": "^21.0.0",
     "@eslint/js": "^10.0.1",
     "@napi-rs/cli": "^3.5.1",
     "@semantic-release/changelog": "^6.0.3",
